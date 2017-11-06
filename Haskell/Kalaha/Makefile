@@ -22,7 +22,7 @@ RM=/bin/rm
 
 PANDOC=pandoc
 
-PANDOC_OPTIONS= -r markdown+lhs --smart --standalone
+PANDOC_OPTIONS= -r markdown+lhs -smart --standalone
 
 PANDOC_HTML_OPTIONS=--to html5
 PANDOC_PDF_OPTIONS= -t latex --listings -H preamble.tex

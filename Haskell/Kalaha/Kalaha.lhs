@@ -3,19 +3,20 @@ toc: 1
 numbersections: true
 geometry: margin=2.5cm
 title: Programming Languages (Project 1)
-author: Full Name (sdulogin16)
+author: Jeff Gyldenbrand (jegyl16)
 date: November 13, 2017
 abstract: |
-    The goal of this project is ...
+    The goal of this project is ... to eat cake
 ---
 
 \newpage
 
 The Kalaha game with parameters $(n,m)$
 ====
-
 \begin{code}
 module Kalaha where
+
+import Data.List
 
 type PitCount   = Int
 type StoneCount = Int
@@ -32,7 +33,8 @@ The function `startStateImpl`
 
 \begin{code}
 startStateImpl :: Kalaha -> KState
-startStateImpl (Kalaha n m) = undefined
+startStateImpl (Kalaha n m) = replicate n m ++ [0]
+                           ++ replicate n m ++ [0]
 \end{code}
 
 
@@ -41,7 +43,16 @@ The function `movesImpl`
 
 \begin{code}
 movesImpl :: Kalaha -> Player -> KState -> [KPos]
-movesImpl g p s = undefined
+movesImpl (Kalaha n m) p s
+  | p == False = findIndices (>0) (pFalse)
+  | p == True = findIndices' (n+1) (pTrue)
+    where
+      pFalse = init(fst(splitAt (n+1) s))
+      pTrue = init(snd(splitAt (n+1) s))
+      findIndices' _ [] = []
+      findIndices' n (x:s)
+        | (x > 0)   = n : findIndices' (n+1) s
+        | otherwise = findIndices' (n+1) s
 \end{code}
 
 
@@ -51,7 +62,10 @@ The function `valueImpl`
 
 \begin{code}
 valueImpl :: Kalaha -> KState -> Double
-valueImpl g s = undefined
+valueImpl (Kalaha n m) s = fromIntegral (pitTrue - pitFalse)
+  where
+    pitTrue = last(fst(splitAt(n+1) s))
+    pitFalse = last(snd(splitAt(n+1) s))
 \end{code}
 
 The function `moveImpl`
@@ -60,7 +74,10 @@ The function `moveImpl`
 
 \begin{code}
 moveImpl :: Kalaha -> Player -> KState -> KPos -> (Player,KState)
-moveImpl g p s xs = undefined
+moveImpl (Kalaha n m) p s = undefined
+--  | pFalse =
+--  | pTrue =
+
 \end{code}
 
 The function `showGameImpl`
@@ -106,23 +123,23 @@ kalahaGame k = Game {
     moves      = movesImpl k,
     value      = const (valueImpl k)}
 
-startTree :: Game s m -> Player -> Tree m (Player,Double) 
+startTree :: Game s m -> Player -> Tree m (Player,Double)
 startTree g p = tree g (p, startState g)
-    
+
 \end{code}
 The function `tree`
 ----
 
-    
+
 \begin{code}
 tree      :: Game s m -> (Player, s) -> Tree m (Player, Double)
 tree = undefined
-    
+
 \end{code}
 The function `minimax`
 ----
 
-    
+
 \begin{code}
 minimax   :: Tree m (Player, Double) -> (Maybe m, Double)
 minimax = undefined
