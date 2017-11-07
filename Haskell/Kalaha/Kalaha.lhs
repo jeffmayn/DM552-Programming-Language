@@ -1,4 +1,4 @@
----
+s---
 toc: 1
 numbersections: true
 geometry: margin=2.5cm
@@ -51,7 +51,7 @@ movesImpl (Kalaha n m) p s
       pTrue = init(snd(splitAt (n+1) s))
       findIndices' _ [] = []
       findIndices' n (x:s)
-        | (x > 0)   = n : findIndices' (n+1) s
+        | (x>0) = n : findIndices' (n+1) s
         | otherwise = findIndices' (n+1) s
 \end{code}
 
@@ -86,7 +86,42 @@ The function `showGameImpl`
 
 \begin{code}
 showGameImpl :: Kalaha -> KState -> String
-showGameImpl g@(Kalaha n m) xs = undefined
+showGameImpl g@(Kalaha n m) xs = total
+   where
+     len' = length(show(2*n*m))
+     newLine = "\n"
+     pitSpace = unwords $(replicate (n+3) " ")
+     emptySpace = unwords $(replicate 3 " ")
+
+     -- players
+     pFalse = init(fst(splitAt (n+1) xs))
+     pTrue = init(snd(splitAt (n+1) xs))
+
+     -- Kalaha pits
+     pitTrue = drop n (fst(splitAt (n+1) xs))
+     pitFalse = drop n (snd(splitAt (n+1) xs))
+
+     -- print out: Player True's pits
+     trueOut = unwords $(map show(reverse(pTrue)))
+     -- print out: Player False's pit
+     falseOut = unwords $(map show(pFalse))
+
+     -- print out: Player True's pit
+     truePitOut = unwords $(map show(pitTrue))
+     -- print out: Player False's pit
+     falsePitOut = unwords $(map show(pitFalse))
+
+     -- print out: complete kalaha
+     total = emptySpace
+           ++ trueOut
+           ++ newLine
+           ++ falsePitOut
+           ++ pitSpace
+           ++ truePitOut
+           ++ newLine
+           ++ emptySpace
+           ++ falseOut
+
 \end{code}
 
 
