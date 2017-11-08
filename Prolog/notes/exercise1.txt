@@ -2,29 +2,110 @@ Exercise 1: Propositional and first order logic
 --------------------------------------------------------
 
 Exercise 01:
------------------------------
-
+-------------------------------------------------------------------------------
+Question                                       |        Solution
+-----------------------------------------------|--------------------------------
+1. a → p(b)                                    |   True
+2. r(x, b) → ∃y    q(y,  y)                    |   False
+3. r(x, b) ⋁ ∃y    g(y,  b)                    |   False
+4. ¬ y ⋁ p(y)                                  |   False
+5. ¬¬p(a)                                      |   True
+6. ¬ ∀ x ¬ p(x)                                |   True
+7. ∀x∃y (r(x, y)→r(y, x))                      |   True
+8. ∀x ∃y. (r(x, y)→(r(y, x) ⋁ (f(a)=g(a, x)))) |   False
 
 
 Exercise 02:
 -----------------------------
-
+1. P(x) ⋀ ¬r(y, a).                             |  x,y
+2. ∃x. r(x, y).                                 |  y
+3. ∀x. p(x)→∃y. ¬q(f(x), y, f(y)).              | none
+4. ∀x∃y. r(x, f(y))                             | none
 
 
 Exercise 03:
 -----------------------------
-
+1. bought(Frank, dvd).                          | Frank bought a dvd
+2. ∃x. bought(Frank, x).                        | Frank has bought at leat one dvd
+3. ∀x. (bought(Frank, x) → bought(Susan, x)).   | In all cases, if frank has bought x, then susan has also bought x
+4. ∀x. bought(Frank, x)→∀x. bought(Susan, x).   | For every item frank buys susan buys every item
+5. ∀x. ∃y. bought(x, y).                        | Everybody has bought something
+6. ∃x∀y. bought(x, y).                          | Someone bought everything
 
 
 Exercise 04:
 -----------------------------
+"There is a computer which is not used by any student"
 
+∃x. (Computer(x) ⋀ ∀y. (¬Student(y) ⋀ ¬Uses(y, x))).      | False
+∃x. (Computer(x)→∀y. (Student(y)→¬Uses(y, x))).            | True
+∃x. (Computer(x) ⋀ ∀y. (¬Student(y)→¬Uses(y, x))).        | False
 
 
 Exercise 05:
 -----------------------------
 
+(∀X) (P(g(X), a)→Q(f(X), b))
+
+Interpretation:
+--------------------------------------------
+                D(X)={1, 2, 3}.
+
+g(1) = 3           x = 1   P(3,2) -> Q(4,3)
+g(2) = 3                    false -> true
+g(3) = 3
+f(1) = 4
+f(1) = 5
+f(1) = 6
+--------------------------------------------
+            g(x)= x+2; f(x)= x+3;
+
+--------------------------------------------
+                 a=2, b=3.
+
+--------------------------------------------
+    P (a, b)= true if a <b, false otherwise.
+
+--------------------------------------------
+      Q (a, b)=true if a>b, false otherwise
+
 
 
 Exercise 06:
 -----------------------------
+// Student(x)
+// Smart(x)
+// Loves(x,y)
+// Takes(x,y)
+
+1. All Students are smart.
+// ∀x student(x) → smart(x)
+
+2. There exists a student.
+// ∃x student(x)
+
+3. There exists a smart student.
+// ∃x student(x) ⋀ smart(x)
+
+4. Every student loves some student.
+// ∀x student(x) → ∃y student(y) ⋀ loves(x,y)
+
+5. Every student loves some other student.
+// ∀x student(x) → ∃y student(y) ⋀ loves(x,y) ⋀ x != y
+
+6. There is a student who is loved by every other student.
+// ∃x student(x) ⋀ ∀y student(y) ⋀ loves(y,x) ⋀ x != y
+
+7. Bill is a student.
+// student('Bill')
+
+8. Bill takes either Analysis or Geometry (but not both).
+// (takes('Bill', Analysis) ⋀ ¬takes(Bill, Geometry)) not finnished
+
+9. Bill takes Analysis and Geometry.
+//
+
+10.Bill doesn’t take Analysis.
+
+
+11. No students love Bill
