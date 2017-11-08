@@ -88,7 +88,8 @@ The function `showGameImpl`
 showGameImpl :: Kalaha -> KState -> String
 showGameImpl g@(Kalaha n m) xs = total
    where
-     len' = length(show(2*n*m))
+     maxLen = length(show(2*n*m))
+     
      newLine = "\n"
      pitSpace = unwords $(replicate (n+3) " ")
      emptySpace = unwords $(replicate 3 " ")
