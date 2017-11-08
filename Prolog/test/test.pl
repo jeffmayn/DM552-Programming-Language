@@ -1,0 +1,2 @@
+student('Bill').
+student('Jeff').
