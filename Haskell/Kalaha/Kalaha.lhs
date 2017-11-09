@@ -211,13 +211,26 @@ Trees
 data Tree m v  = Node v [(m,Tree m v)] deriving (Eq, Show)
 \end{code}
 
+Test tree
+----
+\begin{code}
+testTree :: Tree Int Int
+testTree = Node 3 [(0, Node 4[(0, Node 5 []),(1, Node 6 []), (2, Node 7 [])]), (1, Node 9[(0, Node 10[])])]
+\end{code}
+
+
 The function `takeTree`
 ----
 
 \begin{code}
 takeTree :: Int -> Tree m v -> Tree m v
-takeTree = undefined
+takeTree n (Node v list)
+ | (n==0) = (Node v [])
+ | otherwise = (Node v (map villy list))
+  where
+   villy (m,t) = (m, takeTree (n-1) t)
 \end{code}
+
 
 The Minimax algorithm
 ====
@@ -244,12 +257,13 @@ startTree g p = tree g (p, startState g)
 The function `tree`
 ----
 
-
 \begin{code}
 tree      :: Game s m -> (Player, s) -> Tree m (Player, Double)
 tree = undefined
-
 \end{code}
+
+
+
 The function `minimax`
 ----
 
