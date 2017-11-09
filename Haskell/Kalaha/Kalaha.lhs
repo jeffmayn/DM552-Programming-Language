@@ -74,10 +74,88 @@ The function `moveImpl`
 
 \begin{code}
 moveImpl :: Kalaha -> Player -> KState -> KPos -> (Player,KState)
-moveImpl (Kalaha n m) p s = undefined
---  | pFalse =
---  | pTrue =
+moveImpl (Kalaha n m) p s xs = bushit
+ where
+   bushit = recursiveFunction (Kalaha n m) p k (xs+1) x
+   x = s!!xs
+   k = firstMove xs s
 
+\end{code}
+
+\begin{code}
+----------------------------------
+firstMove q s = k
+ where
+   hej = splitAt (q+1) s
+   first = init(fst(hej))
+   second = snd(hej)
+
+   k = (first ++ 0 : second)
+----------------------------------
+\end{code}
+
+\begin{code}
+----------------------------------
+incrementMove q s l = k
+ where
+   h = s!!q
+   hej = splitAt (q+1) s
+   first = init(fst(hej))
+   second = snd(hej)
+
+   k = (first ++ (h+l) : second)
+----------------------------------
+\end{code}
+
+\begin{code}
+----------------------------------
+emptyPit (Kalaha n m) p q s
+ | p == False = emptyF'
+ | p == True = emptyT'
+ where
+   op = (s!!(q+((2*n)-(q*2)))) + 1                -- Modsat pit + 1
+   k2 = firstMove q s                             -- tømmer index for tomt slut pit
+   k3 = firstMove (q+((2*n)-(q*2))) k2            -- tømmer modsat pit
+   emptyF' = incrementMove n k3 op -- false
+   emptyT' = incrementMove ((n*2)+1) k3 op -- true
+----------------------------------
+\end{code}
+
+\begin{code}
+----------------------------------
+lastMove (Kalaha n m) p q s
+-- | (p == False) && ((findIndex (>0) (fst(splitAt n s)) == Nothing) = lastNF'
+-- | (p == True) && ((findIndex (>0) (init(snd(splitAt n+1 s))) == Nothing) = lastNT'
+ | (p == False) && (s!!q == 1) && ( q < n) = lastEF'                      -- empty pit player false
+ | (p == True) && (s!!q == 1) && (q > n) && (q < ((n*2)+1)) = lastET'     --
+ | (p == False) && (q == n) = lastKF'                                     --
+ | (p == True) && (q == n*2+1) = lastKT'                                  --
+ | otherwise = (not p, s)                                                 --
+  where
+  bo = (emptyPit (Kalaha n m) False q s)
+  biver = (emptyPit (Kalaha n m) True q s)
+  lastEF' = (True, bo)
+  lastET' = (False, biver)
+  lastKF' = (False, s)
+  lastKT' = (True, s)
+
+---------------------------------------
+\end{code}
+
+\begin{code}
+---------------------------------------
+recursiveFunction (Kalaha n m) p s q x
+ | (x==0) = lastMove (Kalaha n m) p (q-1) s
+ | (x>0) && (q > n*2+1) = recursiveFunction (Kalaha n m) p kz 1 (x-1)
+ | (p == False) && (q == 2*n+1) = recursiveFunction (Kalaha n m) p k0 1 (x-1)
+ | (p == True) && (q == n) = recursiveFunction (Kalaha n m) p kz2 (q+2) (x-1)
+ | otherwise = recursiveFunction (Kalaha n m) p k (q+1) (x-1)
+ where
+  k = incrementMove q s 1
+  k0 = incrementMove (0) s 1
+  kz = incrementMove (0) s 1
+  kz2 = incrementMove (q+1) s 1
+---------------------------------------
 \end{code}
 
 The function `showGameImpl`
@@ -89,7 +167,7 @@ showGameImpl :: Kalaha -> KState -> String
 showGameImpl g@(Kalaha n m) xs = total
    where
      maxLen = length(show(2*n*m))
-     
+
      newLine = "\n"
      pitSpace = unwords $(replicate (n+3) " ")
      emptySpace = unwords $(replicate 3 " ")
