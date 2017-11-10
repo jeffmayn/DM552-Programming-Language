@@ -21,24 +21,24 @@ anyKalaha = sized $ \n -> sized $ \m -> return $ Kalaha (n+1) (m+1)
 
 arbitraryState :: Kalaha -> Gen KState
 arbitraryState (Kalaha n m)   = do  xs <- sequence $ replicate (2*n*m) $ choose (0, 2*n - 1)
-                                    return [ length $ filter (==i) xs | i <- [0..2*n + 1]] 
+                                    return [ length $ filter (==i) xs | i <- [0..2*n + 1]]
 
 arbitraryMove g p s = case xs of
     []  -> return Nothing
     _   -> do
       i <- choose (0, length xs - 1)
       return $ Just $ xs !! i
-  where xs = movesImpl g p s 
+  where xs = movesImpl g p s
 
 prop_startStateLen :: Kalaha -> Bool
-prop_startStateLen g@(Kalaha n m)     = (length $ startStateImpl g) == 2 * (n+1) 
+prop_startStateLen g@(Kalaha n m)     = (length $ startStateImpl g) == 2 * (n+1)
 
 
 prop_startStateSum :: Kalaha -> Bool
 prop_startStateSum g@(Kalaha n m)     = (sum $ startStateImpl g) == 2 * n * m
 
 
-prop_startStateValue :: Kalaha -> Bool 
+prop_startStateValue :: Kalaha -> Bool
 prop_startStateValue g@(Kalaha n m)   = and [ (if (i `mod` (n+1) == n) then 0 else m) == x | (i,x) <- [0..] `zip` startStateImpl g ]
 
 getSymmetricState :: Kalaha -> KState -> KState
@@ -48,21 +48,21 @@ prop_startStateSymmetric :: Kalaha -> Bool
 prop_startStateSymmetric g = (getSymmetricState g $ startStateImpl g) == startStateImpl g
 
 
-prop_valueSymmetric = forAll anyKalaha $ \g@(Kalaha n _) -> 
-  forAll (arbitraryState g) $ \s -> 
+prop_valueSymmetric = forAll anyKalaha $ \g@(Kalaha n _) ->
+  forAll (arbitraryState g) $ \s ->
   valueImpl g s == - valueImpl g (getSymmetricState g s)
 
 
 
 
-prop_movesSymmetric = forAll anyKalaha $ \g@(Kalaha n _) -> 
+prop_movesSymmetric = forAll anyKalaha $ \g@(Kalaha n _) ->
                       forAll (arbitrary :: Gen Bool) $ \p ->
-                      forAll (arbitraryState g) $ \s -> 
+                      forAll (arbitraryState g) $ \s ->
                       movesImpl g p s == (map (\i -> (i+n+1) `mod` (2*n + 2) ) $ movesImpl g (not p) (getSymmetricState g s))
 
-prop_moveSymmetric = forAll anyKalaha $ \g@(Kalaha n _) -> 
+prop_moveSymmetric = forAll anyKalaha $ \g@(Kalaha n _) ->
   forAll (arbitrary :: Gen Bool) $ \p ->
-  forAll (arbitraryState g) $ \s -> 
+  forAll (arbitraryState g) $ \s ->
   forAll (arbitraryMove g p s) $ \iOpt ->
     case iOpt of
       Nothing -> True
@@ -71,9 +71,9 @@ prop_moveSymmetric = forAll anyKalaha $ \g@(Kalaha n _) ->
                  in   s1 == getSymmetricState g s2
 
 
-prop_moveDoesntChangeSum = forAll anyKalaha $ \g -> 
+prop_moveDoesntChangeSum = forAll anyKalaha $ \g ->
                                         forAll (arbitrary :: Gen Bool) $ \p ->
-                                        forAll (arbitraryState g) $ \s -> 
+                                        forAll (arbitraryState g) $ \s ->
                                         forAll (arbitraryMove g p s) $ \iOpt ->
                                           case iOpt of
                                             Nothing -> True
@@ -146,7 +146,7 @@ prop_specificMoves = let g = Kalaha 6 6 in and [
     moveImpl g False [2,0,0,0,1,0,40,0,0,0,1,0,0,28] 0 == (True,[0,0,0,0,0,0,44,0,0,0,0,0,0,28])
   ]
 
--- Move doesn't change the sum of 
+-- Move doesn't change the sum of
 
 return []
 main = $quickCheckAll

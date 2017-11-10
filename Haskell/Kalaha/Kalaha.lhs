@@ -211,7 +211,7 @@ Trees
 data Tree m v  = Node v [(m,Tree m v)] deriving (Eq, Show)
 \end{code}
 
-Test tree
+Test tree hjælpefunktion
 ----
 \begin{code}
 testTree :: Tree Int Int
@@ -226,9 +226,9 @@ The function `takeTree`
 takeTree :: Int -> Tree m v -> Tree m v
 takeTree n (Node v list)
  | (n==0) = (Node v [])
- | otherwise = (Node v (map villy list))
+ | otherwise = (Node v (map theTree list))
   where
-   villy (m,t) = (m, takeTree (n-1) t)
+   theTree (m,t) = (m, takeTree (n-1) t)
 \end{code}
 
 
@@ -259,9 +259,10 @@ The function `tree`
 
 \begin{code}
 tree      :: Game s m -> (Player, s) -> Tree m (Player, Double)
-tree = undefined
+tree (Game startState showGame move moves value) (p,s) = undefined
 \end{code}
 
+tree (kalahaGame (Kalaha 6 6)) (False, [6,6,6,6,6,6,0,6,6,6,6,6,6,0])
 
 
 The function `minimax`
