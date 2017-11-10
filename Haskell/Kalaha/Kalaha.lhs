@@ -82,6 +82,9 @@ moveImpl (Kalaha n m) p s xs = bushit
 
 \end{code}
 
+
+
+
 \begin{code}
 ----------------------------------
 firstMove q s = k
@@ -107,25 +110,56 @@ incrementMove q s l = k
 ----------------------------------
 \end{code}
 
+
 \begin{code}
 ----------------------------------
 emptyPit (Kalaha n m) p q s
  | p == False = emptyF'
  | p == True = emptyT'
  where
-   op = (s!!(q+((2*n)-(q*2)))) + 1                -- Modsat pit + 1
-   k2 = firstMove q s                             -- tømmer index for tomt slut pit
-   k3 = firstMove (q+((2*n)-(q*2))) k2            -- tømmer modsat pit
-   emptyF' = incrementMove n k3 op -- false
-   emptyT' = incrementMove ((n*2)+1) k3 op -- true
+   -- Modsat pit + 1
+   op = (s!!(q+((2*n)-(q*2)))) + 1
+   -- tømmer index for tomt slut pit
+   k2 = firstMove q s
+   -- tømmer modsat pit
+   k3 = firstMove (q+((2*n)-(q*2))) k2
+   -- false
+   emptyF' = incrementMove n k3 op
+   -- true
+   emptyT' = incrementMove ((n*2)+1) k3 op
+----------------------------------
+\end{code}
+
+
+\begin{code}
+----------------------------------
+emptyAll (Kalaha n m) p s ind c
+ | (c<0) = s
+ | otherwise = emptyAll (Kalaha n m) p k ind (c-1)
+ where
+    o = ind!!c
+    k = emptySpecificPit (Kalaha n m) p o s
+----------------------------------
+\end{code}
+
+\begin{code}
+----------------------------------
+emptySpecificPit (Kalaha n m) p o s
+ | p == False = allEmptyFalse'
+ | otherwise = allEmptyTrue'
+ where
+  val = s!!o
+  k = firstMove o s
+  allEmptyFalse' = incrementMove n k val
+  allEmptyTrue' = incrementMove (n*2+1) k val
+
+
 ----------------------------------
 \end{code}
 
 \begin{code}
 ----------------------------------
 lastMove (Kalaha n m) p q s
--- | (p == False) && ((findIndex (>0) (fst(splitAt n s)) == Nothing) = lastNF'
--- | (p == True) && ((findIndex (>0) (init(snd(splitAt n+1 s))) == Nothing) = lastNT'
  | (p == False) && (s!!q == 1) && ( q < n) = lastEF'                      -- empty pit player false
  | (p == True) && (s!!q == 1) && (q > n) && (q < ((n*2)+1)) = lastET'     --
  | (p == False) && (q == n) = lastKF'                                     --
@@ -139,13 +173,31 @@ lastMove (Kalaha n m) p q s
   lastKF' = (False, s)
   lastKT' = (True, s)
 
+
 ---------------------------------------
 \end{code}
+
+
+\begin{code}
+----------------------------------
+endCheck (Kalaha n m) p q s
+ | (findIndex (>0) (fst(splitAt n k)) == Nothing) = (not p, lastNF')
+ | (findIndex (>0) (init(snd(splitAt (n+1) k))) == Nothing) = (not p, lastNT')
+ | otherwise = lastMove (Kalaha n m) p q s
+  where
+   k = snd(lastMove (Kalaha n m) p q s)
+   ind = (findIndices (>0) (fst(splitAt n k))) ++(findIndices (>0) (init(snd(splitAt (n+1) k))))
+   lenL = ((length ind) -1)
+   lastNF' = emptyAll (Kalaha n m) True k ind lenL
+   lastNT' = emptyAll (Kalaha n m) False k ind lenL
+----------------------------------
+\end{code}
+
 
 \begin{code}
 ---------------------------------------
 recursiveFunction (Kalaha n m) p s q x
- | (x==0) = lastMove (Kalaha n m) p (q-1) s
+ | (x==0) = endCheck (Kalaha n m) p (q-1) s
  | (x>0) && (q > n*2+1) = recursiveFunction (Kalaha n m) p kz 1 (x-1)
  | (p == False) && (q == 2*n+1) = recursiveFunction (Kalaha n m) p k0 1 (x-1)
  | (p == True) && (q == n) = recursiveFunction (Kalaha n m) p kz2 (q+2) (x-1)
