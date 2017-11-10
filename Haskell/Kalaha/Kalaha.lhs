@@ -27,138 +27,180 @@ type KState     = [Int]
 type Player     = Bool
 \end{code}
 
-
 The function `startStateImpl`
 ----
+We are giving the declaretion `startStateImpl` with a 'Kalaha'-game: Kalaha,
+which takes a pit-count and stone-count as parameters and returns the initial state
+of the game in a list: KState.
+
+By replicating the pit-count and stone-count, and then append a zero, we get half the
+list, so we simply do this twice to return the complete state.
 
 \begin{code}
 startStateImpl :: Kalaha -> KState
-startStateImpl (Kalaha n m) = replicate n m ++ [0]
-                           ++ replicate n m ++ [0]
+startStateImpl (Kalaha pitCount stoneCount) =
+  replicate pitCount stoneCount ++ [0]
+  ++ replicate pitCount stoneCount ++ [0]
 \end{code}
 
 
 The function `movesImpl`
 ----
+In `movesImpl` which, besides the 'Kalaha'-game parameters, now take as parameters a player; False or True,
+and a state for the game. Then returns the pits of given player's pits with has a positive number of
+elements.
+
+This is done by making two guards: one for each player.
+If it is player False we simply use the 'findIndices' function which, in our case, returns all
+indices greater than zero. This we can do because we split the game state into a tuble, and
+define player False to be the first element in the tuble. We use init to exclude player False's
+own kalaha pit.
+
+To find same indices only for player True, we define our own findIndices' functions, that recursively
+searches the other element in the before mentioned tuble.
 
 \begin{code}
 movesImpl :: Kalaha -> Player -> KState -> [KPos]
-movesImpl (Kalaha n m) p s
-  | p == False = findIndices (>0) (pFalse)
-  | p == True = findIndices' (n+1) (pTrue)
+movesImpl (Kalaha pitCount stoneCount) player gameState
+  | player == False = findIndices (>0) (pFalse)
+  | player == True = findIndices' (pitCount+1) (pTrue)
     where
-      pFalse = init(fst(splitAt (n+1) s))
-      pTrue = init(snd(splitAt (n+1) s))
+      pFalse = init(fst(splitAt (pitCount+1) gameState))
+      pTrue = init(snd(splitAt (pitCount+1) gameState))
       findIndices' _ [] = []
-      findIndices' n (x:s)
-        | (x>0) = n : findIndices' (n+1) s
-        | otherwise = findIndices' (n+1) s
+      findIndices' pitCount (x:gameState)
+        | (x>0) = pitCount : findIndices' (pitCount+1) gameState
+        | otherwise = findIndices' (pitCount+1) gameState
 \end{code}
 
 
 The function `valueImpl`
 ----
+In `valueImpl` which, besides the 'Kalaha'-game parameters, now takes as parameters the game state.
+Then returns True's kalaha pit subtracted from False's kalaha pit as the double datatype.
 
+As in `movesImpl` this is done by splitting the game state into two elements in a tuble.
+Then assigning True's kalaha pit to the last element in the first element of the tuble,
+and False's kalaha pit to the last element in the second element of the tuble.
+Then we simply subtract the two kalaha pits.
 
 \begin{code}
 valueImpl :: Kalaha -> KState -> Double
-valueImpl (Kalaha n m) s = fromIntegral (pitTrue - pitFalse)
+valueImpl (Kalaha pitCount stoneCount) gameState = fromIntegral (pitTrue - pitFalse)
   where
-    pitTrue = last(fst(splitAt(n+1) s))
-    pitFalse = last(snd(splitAt(n+1) s))
+    pitTrue = last(fst(splitAt(pitCount+1) gameState))
+    pitFalse = last(snd(splitAt(pitCount+1) gameState))
 \end{code}
 
 The function `moveImpl`
 ----
 
-
 \begin{code}
 moveImpl :: Kalaha -> Player -> KState -> KPos -> (Player,KState)
-moveImpl (Kalaha n m) p s xs = bushit
+moveImpl (Kalaha pitCount stoneCount) player gameState pitIndex = nextTurn
  where
-   bushit = recursiveFunction (Kalaha n m) p k (xs+1) x
-   x = s!!xs
-   k = firstMove xs s
-
+   nextTurn = letsMove (Kalaha pitCount stoneCount) player newGameState (pitIndex+1) pitValue
+   pitValue = gameState!!pitIndex
+   newGameState = initMove pitIndex gameState
 \end{code}
 
-
-
+The function `letsMove`
+----
 
 \begin{code}
-----------------------------------
-firstMove q s = k
+letsMove (Kalaha pitCount stoneCount) player gameState pitIndex pitValue
+-- case 1: if giving player lands in own pit and its zero:
+ | (pitValue == 0) = endCheck (Kalaha pitCount stoneCount) player (pitIndex-1) gameState
+-- case 3: if giving player
+ | (pitValue > 0) && (pitIndex > pitCount*2+1) = letsMove (Kalaha pitCount stoneCount) player kz 1 (pitValue-1)
+-- case 4: if giving player
+ | (player == False) && (pitIndex == 2*pitCount+1) = letsMove (Kalaha pitCount stoneCount) player k0 1 (pitValue-1)
+-- case 5: if it's player True
+ | (player == True) && (pitIndex == pitCount) = letsMove (Kalaha pitCount stoneCount) player kz2 (pitIndex+2) (pitValue-1)
+-- case 6: if giving player
+ | otherwise = letsMove (Kalaha pitCount stoneCount) player k (pitIndex+1) (pitValue-1)
  where
-   hej = splitAt (q+1) s
-   first = init(fst(hej))
-   second = snd(hej)
-
-   k = (first ++ 0 : second)
-----------------------------------
+   -- add one stone to current pit
+  k = incrementMove pitIndex gameState 1
+   -- add one stone to first pit
+  k0 = incrementMove 0 gameState 1
+   -- add one stone to first pit
+  kz = incrementMove 0 gameState 1
+   -- add one stone to next pit
+  kz2 = incrementMove (pitIndex + 1) gameState 1
 \end{code}
 
-\begin{code}
-----------------------------------
-incrementMove q s l = k
- where
-   h = s!!q
-   hej = splitAt (q+1) s
-   first = init(fst(hej))
-   second = snd(hej)
+The help-function `initMove`
+----
+This function assist the main-function `moveImpl`, and ...
 
-   k = (first ++ (h+l) : second)
-----------------------------------
+\begin{code}
+initMove pitIndex gameState = newGameState
+ where
+   pitsFalse = init(fst(splitAt(pitIndex + 1) gameState))
+   pitsTrue = snd(splitAt(pitIndex + 1) gameState)
+   newGameState = (pitsFalse ++ 0 : pitsTrue)
 \end{code}
 
+The help-function `incrementMove`
+----
+\begin{code}
+incrementMove pitIndex gameState incrementValue = newGameState
+ where
+   pitValue = gameState!!pitIndex
+   pitsFalse = init(fst(splitAt(pitIndex + 1) gameState))
+   pitsTrue = snd(splitAt (pitIndex + 1) gameState)
+   newGameState = (pitsFalse ++ (pitValue + incrementValue) : pitsTrue)
+\end{code}
+
+The help-function `emptyPit`
+----
 
 \begin{code}
-----------------------------------
-emptyPit (Kalaha n m) p q s
+emptyPit (Kalaha pitCount stoneCount) p q s
  | p == False = emptyF'
  | p == True = emptyT'
  where
    -- Modsat pit + 1
-   op = (s!!(q+((2*n)-(q*2)))) + 1
+   op = (s!!(q+((2*pitCount)-(q*2)))) + 1
    -- tømmer index for tomt slut pit
-   k2 = firstMove q s
+   k2 = initMove q s
    -- tømmer modsat pit
-   k3 = firstMove (q+((2*n)-(q*2))) k2
+   k3 = initMove (q+((2*pitCount)-(q*2))) k2
    -- false
-   emptyF' = incrementMove n k3 op
+   emptyF' = incrementMove pitCount k3 op
    -- true
-   emptyT' = incrementMove ((n*2)+1) k3 op
-----------------------------------
+   emptyT' = incrementMove ((pitCount*2)+1) k3 op
 \end{code}
 
+The help-function `emptyAll`
+----
 
 \begin{code}
-----------------------------------
 emptyAll (Kalaha n m) p s ind c
  | (c<0) = s
  | otherwise = emptyAll (Kalaha n m) p k ind (c-1)
  where
     o = ind!!c
     k = emptySpecificPit (Kalaha n m) p o s
-----------------------------------
 \end{code}
 
+The help-function `emptySpecificPit`
+----
 \begin{code}
-----------------------------------
 emptySpecificPit (Kalaha n m) p o s
  | p == False = allEmptyFalse'
  | otherwise = allEmptyTrue'
  where
   val = s!!o
-  k = firstMove o s
+  k = initMove o s
   allEmptyFalse' = incrementMove n k val
   allEmptyTrue' = incrementMove (n*2+1) k val
-
-
-----------------------------------
 \end{code}
 
+The help-function `lastMove`
+----
 \begin{code}
-----------------------------------
 lastMove (Kalaha n m) p q s
  | (p == False) && (s!!q == 1) && ( q < n) = lastEF'                      -- empty pit player false
  | (p == True) && (s!!q == 1) && (q > n) && (q < ((n*2)+1)) = lastET'     --
@@ -172,47 +214,26 @@ lastMove (Kalaha n m) p q s
   lastET' = (False, biver)
   lastKF' = (False, s)
   lastKT' = (True, s)
-
-
----------------------------------------
 \end{code}
 
-
+The help-function `endCheck`
+----
 \begin{code}
-----------------------------------
-endCheck (Kalaha n m) p q s
- | (findIndex (>0) (fst(splitAt n k)) == Nothing) = (not p, lastNF')
- | (findIndex (>0) (init(snd(splitAt (n+1) k))) == Nothing) = (not p, lastNT')
- | otherwise = lastMove (Kalaha n m) p q s
+endCheck (Kalaha pitCount stoneCount) player pitIndex gameState
+--  hvis index > 0            
+ | (findIndex (>0) (fst(splitAt pitCount k)) == Nothing) = (not player, lastNF')
+ | (findIndex (>0) (init(snd(splitAt (pitCount+1) k))) == Nothing) = (not player, lastNT')
+ | otherwise = lastMove (Kalaha pitCount stoneCount) player pitIndex gameState
   where
-   k = snd(lastMove (Kalaha n m) p q s)
-   ind = (findIndices (>0) (fst(splitAt n k))) ++(findIndices (>0) (init(snd(splitAt (n+1) k))))
+   k = snd(lastMove (Kalaha pitCount stoneCount) player pitIndex gameState)
+   ind = (findIndices (>0) (fst(splitAt pitCount k))) ++(findIndices (>0) (init(snd(splitAt (pitCount+1) k))))
    lenL = ((length ind) -1)
-   lastNF' = emptyAll (Kalaha n m) True k ind lenL
-   lastNT' = emptyAll (Kalaha n m) False k ind lenL
-----------------------------------
-\end{code}
-
-
-\begin{code}
----------------------------------------
-recursiveFunction (Kalaha n m) p s q x
- | (x==0) = endCheck (Kalaha n m) p (q-1) s
- | (x>0) && (q > n*2+1) = recursiveFunction (Kalaha n m) p kz 1 (x-1)
- | (p == False) && (q == 2*n+1) = recursiveFunction (Kalaha n m) p k0 1 (x-1)
- | (p == True) && (q == n) = recursiveFunction (Kalaha n m) p kz2 (q+2) (x-1)
- | otherwise = recursiveFunction (Kalaha n m) p k (q+1) (x-1)
- where
-  k = incrementMove q s 1
-  k0 = incrementMove (0) s 1
-  kz = incrementMove (0) s 1
-  kz2 = incrementMove (q+1) s 1
----------------------------------------
+   lastNF' = emptyAll (Kalaha pitCount stoneCount) True k ind lenL
+   lastNT' = emptyAll (Kalaha pitCount stoneCount) False k ind lenL
 \end{code}
 
 The function `showGameImpl`
 ----
-
 
 \begin{code}
 showGameImpl :: Kalaha -> KState -> String
