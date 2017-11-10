@@ -311,11 +311,16 @@ The function `tree`
 
 \begin{code}
 tree      :: Game s m -> (Player, s) -> Tree m (Player, Double)
-tree (Game startState showGame move moves value) (p,s) = undefined
+tree g (p, s)
+ | p == False = Node (p, v) (map newNode nextMove)
+ | otherwise = Node (p, v) (map newNode nextMove)
+   where
+     v = value g p s
+     nextMove = moves g p s
+     newNode blah = (blah, tree g completeTree)
+      where
+        completeTree = move g p s blah
 \end{code}
-
-tree (kalahaGame (Kalaha 6 6)) (False, [6,6,6,6,6,6,0,6,6,6,6,6,6,0])
-
 
 The function `minimax`
 ----
