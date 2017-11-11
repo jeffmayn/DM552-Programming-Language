@@ -111,8 +111,8 @@ The function `letsMove`
 letsMove (Kalaha pitCount stoneCount) player gameState pitIndex pitValue
 -- case 1: if giving player lands in own pit and its zero:
  | (pitValue == 0) = endCheck (Kalaha pitCount stoneCount) player (pitIndex-1) gameState
--- case 3: if giving player
- | (pitValue > 0) && (pitIndex > pitCount*2+1) = letsMove (Kalaha pitCount stoneCount) player kz 1 (pitValue-1)
+-- case 3: if current pit value is greater than zero, but index is greater than actual board
+ | (pitValue > 0) && (pitIndex > pitCount*2+1) = letsMove (Kalaha pitCount stoneCount) player reachedBeyoundEndPit 1 (pitValue-1)
 -- case 4: if giving player
  | (player == False) && (pitIndex == 2*pitCount+1) = letsMove (Kalaha pitCount stoneCount) player k0 1 (pitValue-1)
 -- case 5: if it's player True
@@ -125,7 +125,7 @@ letsMove (Kalaha pitCount stoneCount) player gameState pitIndex pitValue
    -- add one stone to first pit
   k0 = incrementMove 0 gameState 1
    -- add one stone to first pit
-  kz = incrementMove 0 gameState 1
+  reachedBeyoundEndPit = incrementMove 0 gameState 1
    -- add one stone to next pit
   kz2 = incrementMove (pitIndex + 1) gameState 1
 \end{code}
