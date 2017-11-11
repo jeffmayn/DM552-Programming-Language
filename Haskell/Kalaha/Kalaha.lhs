@@ -80,7 +80,13 @@ In `valueImpl` which, besides the 'Kalaha'-game parameters, now takes as paramet
 Then returns True's kalaha pit subtracted from False's kalaha pit as the double datatype.
 
 As in `movesImpl` this is done by splitting the game state into two elements in a tuble.
-Then assigning True's kalaha pit to the last element in the first element of the tuble,
+Then assigning True's kal\begin{code}
+movesImpl :: Kalaha -> Player -> KState -> [KPos]
+movesImpl (Kalaha n m) p s = map (+ (if p then n + 1 else 0) )
+                           $ findIndices (>0) $ init $ f $ splitAt (n + 1) s
+                           where
+                             f = if p then fst else snd
+\end{code}aha pit to the last element in the first element of the tuble,
 and False's kalaha pit to the last element in the second element of the tuble.
 Then we simply subtract the two kalaha pits.
 
@@ -179,6 +185,8 @@ The help-function `emptyAll`
 \begin{code}
 emptyAll (Kalaha n m) p s ind c
  | (c<0) = s
+ | (o == n) = emptyAll (Kalaha n m) p s ind (c-1)
+ | (o == n*2+1) = emptyAll (Kalaha n m) p s ind (c-1)
  | otherwise = emptyAll (Kalaha n m) p k ind (c-1)
  where
     o = ind!!c
@@ -226,7 +234,7 @@ endCheck (Kalaha pitCount stoneCount) player pitIndex gameState
  | otherwise = lastMove (Kalaha pitCount stoneCount) player pitIndex gameState
   where
    k = snd(lastMove (Kalaha pitCount stoneCount) player pitIndex gameState)
-   ind = (findIndices (>0) (fst(splitAt pitCount k))) ++(findIndices (>0) (init(snd(splitAt (pitCount+1) k))))
+   ind = findIndices (>0) k
    lenL = ((length ind) -1)
    lastNF' = emptyAll (Kalaha pitCount stoneCount) True k ind lenL
    lastNT' = emptyAll (Kalaha pitCount stoneCount) False k ind lenL
