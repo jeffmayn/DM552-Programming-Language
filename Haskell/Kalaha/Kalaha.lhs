@@ -220,7 +220,7 @@ The help-function `endCheck`
 ----
 \begin{code}
 endCheck (Kalaha pitCount stoneCount) player pitIndex gameState
---  hvis index > 0            
+--  hvis index > 0
  | (findIndex (>0) (fst(splitAt pitCount k)) == Nothing) = (not player, lastNF')
  | (findIndex (>0) (init(snd(splitAt (pitCount+1) k))) == Nothing) = (not player, lastNT')
  | otherwise = lastMove (Kalaha pitCount stoneCount) player pitIndex gameState
@@ -331,16 +331,12 @@ The function `tree`
 ----
 
 \begin{code}
-tree      :: Game s m -> (Player, s) -> Tree m (Player, Double)
-tree g (p, s)
- | p == False = Node (p, v) (map newNode nextMove)
- | otherwise = Node (p, v) (map newNode nextMove)
-   where
-     v = value g p s
-     nextMove = moves g p s
-     newNode blah = (blah, tree g completeTree)
-      where
-        completeTree = move g p s blah
+tree :: Game s m -> (Player, s) -> Tree m (Player, Double)
+tree game (player, state) = Node (player, treeValue) treeMove
+    where
+    treeValue = value game player state
+    treeMoves = moves game player state
+    treeMove = [(m, tree game (move game player state m)) | m <- treeMoves]
 \end{code}
 
 The function `minimax`
