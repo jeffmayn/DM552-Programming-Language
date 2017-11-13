@@ -1,4 +1,4 @@
-s---
+---
 toc: 1
 numbersections: true
 geometry: margin=2.5cm
@@ -10,6 +10,7 @@ abstract: |
 ---
 
 \newpage
+
 
 The Kalaha game with parameters $(n,m)$
 ====
@@ -38,9 +39,9 @@ list, so we simply do this twice to return the complete state.
 
 \begin{code}
 startStateImpl :: Kalaha -> KState
-startStateImpl (Kalaha pitCount stoneCount) =
-  replicate pitCount stoneCount ++ [0]
-  ++ replicate pitCount stoneCount ++ [0]
+startStateImpl (Kalaha pitCount stoneCount) = replicate' ++ replicate'
+  where
+    replicate' = replicate pitCount stoneCount ++ [0]
 \end{code}
 
 
@@ -170,9 +171,9 @@ emptyPit (Kalaha pitCount stoneCount) player q s
  where
    -- Modsat pit + 1
    op = (s!!(q+((2*pitCount)-(q*2)))) + 1
-   -- tømmer index for tomt slut pit
+   -- tmmer index for tomt slut pit
    k2 = initMove q s
-   -- tømmer modsat pit
+   -- tmmer modsat pit
    k3 = initMove (q+((2*pitCount)-(q*2))) k2
    -- false
    emptyF' = modify pitCount k3 op
@@ -260,32 +261,21 @@ The function `showGameImpl`
 
 \begin{code}
 showGameImpl :: Kalaha -> KState -> String
-showGameImpl g@(Kalaha n m) xs =
-  unlines $ [line1, line2, line3]
+showGameImpl g@(Kalaha pitCount stoneCount) gameState =
+  unlines $ map unwords [line1, line2, line3]
   where
-    line1 = "123"
-    line2 = "123"
-    line3 = "123"
+    maxLen = length $ show $ 2*pitCount*stoneCount
+    empty = replicate maxLen ' '
 
-    -- lines   = "a" to ["a"]
-    -- unlines = ["a"] to "a\n"
+    gameState' = map (pad maxLen) $ map show gameState
+    (line1, line3) = (empty : (reverse $ part(pitCount+1, 2*pitCount+1) gameState'), empty : (part(0,pitCount) gameState'))
+    line2 = last gameState' : (replicate pitCount empty ++ [gameState'!!pitCount])
 
-    -- words   = "a" to ["a"]
-    -- unwords = ["a"] to "a"
+    pad :: Int -> String -> String
+    pad pitCount s = replicate (pitCount - length s) ' ' ++ s
 
-    -- concat  = [[1]] to [1]
-
-
-
-    --line1 = pad ++ concat[(map show(reverse(init(snd(splitAt (n+1) xs)))))]
-    --line2 = map show(kPitFalse) ++ empty ++ map show(kPitTrue)
-    --line3 = pad ++ (map show(init(fst(splitAt (n+1) xs))))
-    --kPitFalse = drop n (snd(splitAt (n+1) xs))
-    --kPitTrue = drop n (fst(splitAt (n+1) xs))
-    --maxLen = length (show (2*n*m))
-    --empty = replicate n " "
-    --pad = replicate 2 " "
-    -- pad2 = maxLen " "
+    part :: (Int, Int) -> [a] -> [a]
+    part (x,y) l = drop x $ take y l
 \end{code}
 
 
