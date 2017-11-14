@@ -1,0 +1,63 @@
+Prolog notes 14-11-17   -   Introduction and Basic Concepts
+------------------------------------------------------------
+prolog is used in NLP
+
+Not good for number crunching, but used in assist thinking in terms of of
+objects and entities.
+
+and ..
+
+- expert system
+- natural language processing
+- relational databases
+
+prolog is made of facts and rules:
+-------------------------------------
+a fact is a property of an object, or relation between two or more objects:
+e.g. parent(jane, alan).
+
+is read as: "Jane is parent of Alan"
+
+a rules is used to infer that a property or relation holds based on precondiction.
+e.g. parent(X,Y) :- mother(X,Y)
+
+a predicate is the name given to the word orroring before the brackes of a fact or rule
+
+Predicate                 Interpretation
+-------------------------------------------
+valuable(gold)            Gold is valuable
+owns(john, gold)          John owns gold
+father(john, mary)        John is the father of mary
+gives(john, book, mary)   John gives the book to Mary
+
+
+parent(P1, P2) :- mother(P1, P2). = rule
+          ^           ^
+        head         body
+
+- a clause consists of a head
+- and sometimes a body
+   - facts dont have a body because they are always true.
+
+OPERATORS:
+---------------------------
+And:          <<, >>
+OR:           a newline,
+Not:          \+
+Equality:     ==
+Anon. Var:    _
+
+
+Example on anon. Var:
+----------------------
+predcate(_, 0,1) = x^0 = 1
+
+Example on compound terms:
+------------------------
+mother(X,Y) :- parent(X,Y), father(X)
+
+
+
+
+?-consult('file.pl').
+exit: halt.

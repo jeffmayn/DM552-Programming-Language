@@ -39,9 +39,9 @@ list, so we simply do this twice to return the complete state.
 
 \begin{code}
 startStateImpl :: Kalaha -> KState
-startStateImpl (Kalaha pitCount stoneCount) = replicate' ++ replicate'
+startStateImpl (Kalaha pitC stoneC) = replicate' ++ replicate'
   where
-    replicate' = replicate pitCount stoneCount ++ [0]
+    replicate' = replicate pitC stoneC ++ [0]
 \end{code}
 
 
@@ -62,16 +62,16 @@ searches the other element in the before mentioned tuble.
 
 \begin{code}
 movesImpl :: Kalaha -> Player -> KState -> [KPos]
-movesImpl (Kalaha pitCount stoneCount) player gameState
-  | player == False = findIndices (>0) (pFalse)
-  | player == True = findIndices' (pitCount+1) (pTrue)
+movesImpl (Kalaha pitC stoneC) p gState
+  | p == False = findIndices (>0) (pFalse)
+  | p == True = findIndices' (pitC+1) (pTrue)
     where
-      pFalse = init(fst(splitAt (pitCount+1) gameState))
-      pTrue = init(snd(splitAt (pitCount+1) gameState))
+      pFalse = init(fst(splitAt (pitC+1) gState))
+      pTrue = init(snd(splitAt (pitC+1) gState))
       findIndices' _ [] = []
-      findIndices' pitCount (x:gameState)
-        | (x>0) = pitCount : findIndices' (pitCount+1) gameState
-        | otherwise = findIndices' (pitCount+1) gameState
+      findIndices' pitC (x:gState)
+        | (x>0) = pitC : findIndices' (pitC+1) gState
+        | otherwise = findIndices' (pitC+1) gState
 \end{code}
 
 
@@ -87,55 +87,74 @@ Then we simply subtract the two kalaha pits.
 
 \begin{code}
 valueImpl :: Kalaha -> KState -> Double
-valueImpl (Kalaha pitCount stoneCount) gameState = fromIntegral (pitTrue - pitFalse)
+valueImpl (Kalaha pitC stoneC) gameState = fromIntegral (pitTrue - pitFalse)
   where
-    pitFalse = last(fst(splitAt(pitCount+1) gameState))
-    pitTrue = last(snd(splitAt(pitCount+1) gameState))
+    pitFalse = last(fst(splitAt(pitC+1) gameState))
+    pitTrue = last(snd(splitAt(pitC+1) gameState))
 \end{code}
 
 The function `moveImpl`
 ----
-In `moveImpl` we take all the same parameters as in `movesImpl` only now we want to return the
-the logic of a move, meaning the next player and new state, in a tuble.
+In `moveImpl` we take all the same parameters as in `movesImpl` only now we
+want to return the the logic of a move, meaning the next player and new state,
+in a tuble.
 
-To accomplish this, several help functions is developed: `letsMove`, `initMove`, `incrementMove`,
-`emptyPit`, `emptySpecificPit`, `lastMove`, `endCheck`, `sweapBoard`.
+To accomplish this, several help functions is developed: `letsMove`,
+`initMove`, `incrementMove`, `emptyPit`, `emptySpecificPit`, `lastMove`,
+`endCheck`, `sweapBoard`.
 
-All these help functions are needed in order to define a ruleset of the move, and will be explained
-in more details in the beginning of each. As for the main function it will read the given parameters,
-and call our first help function `letsMove`.
+All these help functions are needed in order to define a ruleset of the move,
+and will be explained in more details in the beginning of each. As for the main
+function it will read the given parameters, and call our first help-
+function `letsMove`.
 
 \begin{code}
 moveImpl :: Kalaha -> Player -> KState -> KPos -> (Player,KState)
-moveImpl (Kalaha pitCount stoneCount) player gameState pitIndex = nextTurn
+moveImpl (Kalaha pitC stoneC) p gState pitIndex = nextTurn
  where
-   nextTurn = letsMove (Kalaha pitCount stoneCount) player newGameState (pitIndex+1) pitValue
-   pitValue = gameState!!pitIndex
-   newGameState = initMove pitIndex gameState
+   nextTurn = letsMove (Kalaha pitC stoneC) p newGameState (pitIndex+1) pitVal
+   pitVal = gState!!pitIndex
+   newGameState = initMove pitIndex gState
 \end{code}
 
 The function `letsMove`
 ----
-`letsMove` is where the primary action is happening. As parameters it takes a kalaha game, a player, a state,
-the current index and its value. With guards we check for some condition, that will determine the next legal move:
+`letsMove` is where the primary action is happening. As parameters it takes a
+kalaha game, a player, a state, the current index and its value. With guards
+we check for some condition, that will determine the next legal move:
+
 1. When last move in game is made, we check for the other move-rules
-2. To prevent a move to reach past the last index in the list, we jump back at the beginning, and drop a stone.
-3. If player false lands in player trues pit, we skip it, and land at player falses start pit, and drop a stone.
-4. if player true lands in player falses pit, we skip it, and land at player trues start pit, and drop a stone.
+2. To prevent a move to reach past the last index in the list, we jump back at
+the beginning, and drop a stone.
+
+3. If player false lands in player trues pit, we skip it, and land at player
+falses start pit, and drop a stone.
+
+4. if player true lands in player falses pit, we skip it, and land at player
+trues start pit, and drop a stone.
+
 5. if none of above rules are violated, we move to next pit and drop a stone.
 
 \begin{code}
-letsMove (Kalaha pitCount stoneCount) player gameState pitIndex pitValue
- | (pitValue == 0) = endCheck (Kalaha pitCount stoneCount) player (pitIndex-1) gameState
- | (pitValue > 0) && (pitIndex > pitCount*2+1) = letsMove (Kalaha pitCount stoneCount) player beyond 1 (pitValue-1)
- | (player == False) && (pitIndex == 2*pitCount+1) = letsMove (Kalaha pitCount stoneCount) player skipTrue 1 (pitValue-1)
- | (player == True) && (pitIndex == pitCount) = letsMove (Kalaha pitCount stoneCount) player skipFalse (pitIndex+2) (pitValue-1)
- | otherwise = letsMove (Kalaha pitCount stoneCount) player nextMove (pitIndex+1) (pitValue-1)
+letsMove (Kalaha pitC stoneC) p gState pitIndex pitVal
+-- Guard 1:
+ | (pitVal == 0) = endCheck (Kalaha pitC stoneC) p (pitIndex-1) gState
+-- Guard 2:
+ | (pitVal > 0) && (pitIndex > pitC*2+1) =
+   letsMove (Kalaha pitC stoneC) p beyond 1 (pitVal-1)
+-- Guard 3:
+ | (p == False) && (pitIndex == 2*pitC+1) =
+   letsMove (Kalaha pitC stoneC) p skipTrue 1 (pitVal-1)
+-- Guard 4:
+ | (p == True) && (pitIndex == pitC) =
+   letsMove (Kalaha pitC stoneC) p skipFalse (pitIndex+2) (pitVal-1)
+-- Guard 5:
+ | otherwise = letsMove (Kalaha pitC stoneC) p nextMove (pitIndex+1) (pitVal-1)
  where
-  nextMove = modify pitIndex gameState 1
-  beyond = modify 0 gameState 1
-  skipTrue = modify 0 gameState 1
-  skipFalse = modify (pitIndex + 1) gameState 1
+  nextMove = modify pitIndex gState 1
+  beyond = modify 0 gState 1
+  skipTrue = modify 0 gState 1
+  skipFalse = modify (pitIndex + 1) gState 1
 \end{code}
 
 The help-function `initMove`
@@ -202,19 +221,19 @@ The help-function `lastMove`
 5. nothing happens, and returns state and its next players turn
 ----
 \begin{code}
-lastMove (Kalaha pitCount stoneCount) player pitIndex gameState
- | (player == False) && (gameState!!pitIndex == 1) && (pitIndex < pitCount) = lastEF' -- empty pit player false
- | (player == True) && (gameState!!pitIndex == 1) && (pitIndex > pitCount) && (pitIndex < ((pitCount*2)+1)) = lastET'
- | (player == False) && (pitIndex == pitCount) = lastKF'
- | (player == True) && (pitIndex == pitCount*2+1) = lastKT'
- | otherwise = (not player, gameState)
+lastMove (Kalaha pitC stoneC) p pitIndex gState
+ | (p == False) && (gState!!pitIndex == 1) && (pitIndex < pitC) = lastEF'
+ | (p == True) && (gState!!pitIndex == 1) && (pitIndex > pitC) && (pitIndex < ((pitC*2)+1)) = lastET'
+ | (p == False) && (pitIndex == pitC) = lastKF'
+ | (p == True) && (pitIndex == pitC*2+1) = lastKT'
+ | otherwise = (not p, gState)
   where
-  bo = (emptyPit (Kalaha pitCount stoneCount) False pitIndex gameState)
-  biver = (emptyPit (Kalaha pitCount stoneCount) True pitIndex gameState)
+  bo = (emptyPit (Kalaha pitC stoneC) False pitIndex gState)
+  biver = (emptyPit (Kalaha pitC stoneC) True pitIndex gState)
   lastEF' = (True, bo)
   lastET' = (False, biver)
-  lastKF' = (False, gameState)
-  lastKT' = (True, gameState)
+  lastKF' = (False, gState)
+  lastKT' = (True, gState)
 \end{code}
 
 The help-function `endCheck`
@@ -271,13 +290,12 @@ showGameImpl g@(Kalaha pitCount stoneCount) gameState =
     (line1, line3) = (empty : (reverse $ part(pitCount+1, 2*pitCount+1) gameState'), empty : (part(0,pitCount) gameState'))
     line2 = last gameState' : (replicate pitCount empty ++ [gameState'!!pitCount])
 
-    pad :: Int -> String -> String
-    pad pitCount s = replicate (pitCount - length s) ' ' ++ s
+pad :: Int -> String -> String
+pad pitCount s = replicate (pitCount - length s) ' ' ++ s
 
-    part :: (Int, Int) -> [a] -> [a]
-    part (x,y) l = drop x $ take y l
+part :: (Int, Int) -> [a] -> [a]
+part (x,y) l = drop x $ take y l
 \end{code}
-
 
 Trees
 ====
@@ -285,7 +303,7 @@ Trees
 data Tree m v  = Node v [(m,Tree m v)] deriving (Eq, Show)
 \end{code}
 
-Test tree hjælpefunktion
+Test tree hjelpefunktion
 ----
 \begin{code}
 testTree :: Tree Int Int
@@ -328,7 +346,7 @@ startTree :: Game s m -> Player -> Tree m (Player,Double)
 startTree g p = tree g (p, startState g)
 
 \end{code}
-The function `tree`m <- treeMoves
+The function `tree`
 ----
 
 \begin{code}
@@ -346,7 +364,24 @@ The function `minimax`
 
 \begin{code}
 minimax   :: Tree m (Player, Double) -> (Maybe m, Double)
-minimax = undefined
+minimax (Node (_,treeValue) []) =  (Nothing, treeValue)
+minimax (Node (p, v) ch)
+  | p == True = maximumSnd [ (Just path, snd $ minimax subtree) | (path, subtree) <- ch]
+  | otherwise = minimumSnd [ (Just path, snd $ minimax subtree) | (path, subtree) <- ch]
+
+maxSnd :: (a,Double) -> (a, Double) -> (a, Double)
+maxSnd a@(_,v1) b@(_,v2) | v1 >= v2 = a| otherwise = b
+
+minSnd :: (a, Double) -> (a, Double) -> (a, Double)
+minSnd a@(_,v1) b@(_,v2) | v1 < v2 = a| otherwise = b
+
+maximumSnd :: [(a, Double)] -> (a, Double)
+maximumSnd [] = error "undefined for empty list"
+maximumSnd (x:xs) = foldl maxSnd x xs
+
+minimumSnd :: [(a, Double)] -> (a, Double)
+minimumSnd [] = error "undefined for empty list"
+minimumSnd (x:xs) = foldl minSnd x xs
 \end{code}
 
 The function `minimaxAlphaBeta`
