@@ -4,7 +4,7 @@ numbersections: true
 geometry: margin=2.5cm
 title: Programming Languages (Project 1)
 author: Jeff Gyldenbrand (jegyl16)
-date: November 13, 2017
+date: November 17, 2017
 abstract: |
     The goal of this project is ... to eat cake
 ---
@@ -33,8 +33,9 @@ The function `startStateImpl`
 This function is giving with a 'Kalaha'-game: Kalaha,
 which takes a pit-count and stone-count as parameters.
 
-By replicating the pit-count and stone-count, and then append a zero, we get half the
-list, so we simply add the list to itself to return the initial state of the Kalaha-game.
+By replicating the pit-count and stone-count, and then append a zero, we get
+half the list, so we simply add the list to itself to return the initial state
+of the Kalaha-game.
 
 \begin{code}
 startStateImpl :: Kalaha -> KState
@@ -46,17 +47,19 @@ startStateImpl (Kalaha pitC stoneC) = replicate' ++ replicate'
 
 The function `movesImpl`
 ----
-In `movesImpl` which, besides the 'Kalaha'-game parameters, now take as parameters a player; False or True,
-and a state for the game. Then returns the pits which has a positive count of stones of a given player.
+In `movesImpl` which, besides the 'Kalaha'-game parameters, now take as
+parameters a player; False or True, and a state for the game. Then returns the
+pits which has a positive count of stones of a given player.
 
 This is done by making two guards: one for each player.
-If it is player False we simply use the 'findIndices' function which, in our case, returns all
-indices greater than zero. This we can do because we split the game state into a tuble, and
-define player False to be the first element in the tuble. We use init to exclude player False's
-own kalaha pit.
+If it is player False we simply use the 'findIndices' function which, in our
+case, returns all indices greater than zero. This we can do because we split
+the game state into a tuble, and define player False to be the first element
+in the tuble. We use init to exclude player False's own kalaha pit.
 
-To find same indices only for player True, we define our own findIndices' function, that recursively
-searches the other element in the before mentioned tuble.
+To find same indices only for player True, we define our own findIndices'
+function, that recursively searches the other element in the before mentioned
+tuble.
 
 \begin{code}
 movesImpl :: Kalaha -> Player -> KState -> [KPos]
@@ -75,13 +78,14 @@ movesImpl (Kalaha pitC stoneC) p gState
 
 The function `valueImpl`
 ----
-In `valueImpl` which, besides the 'Kalaha'-game parameters, now takes as parameters the game state.
-Then returns True's kalaha pit subtracted from False's kalaha pit as a double.
+In `valueImpl` which, besides the 'Kalaha'-game parameters, now takes as
+parameters the game state. Then returns True's kalaha pit subtracted from
+False's kalaha pit as a double.
 
-As in `movesImpl` this is done by splitting the game state into two elements in a tuble.
-Then assigning True's kalaha pit to the last element in the first element of the tuble,
-and False's kalaha pit to the last element in the second element of the tuble.
-Then we simply subtract the two kalaha pits.
+As in `movesImpl` this is done by splitting the game state into two elements
+in a tuble. Then assigning True's kalaha pit to the last element in the first
+element of the tuble, and False's kalaha pit to the last element in the second
+element of the tuble. Then we simply subtract the two kalaha pits.
 
 \begin{code}
 valueImpl :: Kalaha -> KState -> Double
@@ -98,7 +102,7 @@ want to return the the logic of a move, meaning the next player and the new
 state, in a tuble.
 
 To accomplish this, several help functions is developed: `letsMove`,
-`initMove`, `incrementMove`, `emptyPit`, `emptySpecificPit`, `lastMove`,
+`pickUpStones`, `incrementMove`, `emptyPit`, `emptySpecificPit`, `lastMove`,
 `endCheck`, `sweapBoard`.
 
 All these help functions are needed in order to define a ruleset of the move,
@@ -111,16 +115,17 @@ move called by the function `letsMove`
 moveImpl :: Kalaha -> Player -> KState -> KPos -> (Player,KState)
 moveImpl (Kalaha pitC stoneC) p gState pitIndex = nextTurn
  where
-   nextTurn = letsMove (Kalaha pitC stoneC) p newGameState (pitIndex+1) pitVal
+   nextTurn = letsMove (Kalaha pitC stoneC) p updatedState (pitIndex+1) pitVal
    pitVal = gState!!pitIndex
-   newGameState = pickUpStones pitIndex gState
+   updatedState = pickUpStones pitIndex gState
 \end{code}
 
 The function `letsMove`
 ----
 `letsMove` is where the primary action is happening. As parameters it takes a
-kalaha game, a player, a newGameState, the current index and its value. With guards
-we check for some condition, that will determine the next legal move:
+kalaha game, a player, a newGameState, the current index and its value.
+With guards we check for some condition, that will determine the next
+legal move:
 
 1. if we have zero stones left in the hand, we check for the other rules.
 This is explained in more detailts in the help-function `endCheck`.)
@@ -138,25 +143,20 @@ trues start pit, and drop a stone.
 5. if none of above rules are violated, we move to next pit and drop a stone.
 
 \begin{code}
-letsMove (Kalaha pitC stoneC) p gState pitIndex stones
--- Guard 1:
- | (stones == 0) = endCheck (Kalaha pitC stoneC) p (pitIndex-1) gState
--- Guard 2:
- | (stones > 0) && (pitIndex > pitC*2+1) =
+letsMove (Kalaha pitC stoneC) p gState pIndex stones
+ | (stones == 0) = emptyCheck (Kalaha pitC stoneC) p (pIndex-1) gState     -- 1
+ | (stones > 0) && (pIndex > pitC*2+1) =                                   -- 2
    letsMove (Kalaha pitC stoneC) p beyond 1 (stones-1)
--- Guard 3:
- | (p == False) && (pitIndex == 2*pitC+1) =
+ | (p == False) && (pIndex == 2*pitC+1) =                                  -- 3
    letsMove (Kalaha pitC stoneC) p skipTrue 1 (stones-1)
--- Guard 4:
- | (p == True) && (pitIndex == pitC) =
-   letsMove (Kalaha pitC stoneC) p skipFalse (pitIndex+2) (stones-1)
--- Guard 5:
- | otherwise = letsMove (Kalaha pitC stoneC) p nextMove (pitIndex+1) (stones-1)
+ | (p == True) && (pIndex == pitC) =                                       -- 4
+   letsMove (Kalaha pitC stoneC) p skipFalse (pIndex+2) (stones-1)
+ | otherwise = letsMove (Kalaha pitC stoneC) p nextMove (pIndex+1) (stones-1)--5
  where
-  nextMove = modify pitIndex gState 1
-  beyond = modify 0 gState 1
-  skipTrue = modify 0 gState 1
-  skipFalse = modify (pitIndex + 1) gState 1
+  nextMove = incVal pIndex gState 1
+  beyond = incVal 0 gState 1
+  skipTrue = incVal 0 gState 1
+  skipFalse = incVal (pIndex + 1) gState 1
 \end{code}
 
 The help-function `pickUpStones`
@@ -177,59 +177,71 @@ pickUpStones pitIndex gState = newgState
    newgState = (removeIndexValue ++ 0 : restOfList)
 \end{code}
 
-The help-function `modify`
+The help-function `incVal`
 ----
-takes the existent value and increment by l (usually one)
-
+This function takes as argument a pit index, game state and a value n.
+When ever this function is invoked, the value at giving index is incremented
+by n, and returns the new game state to the function it is invoked by.
 
 \begin{code}
-modify pitIndex gameState incrementValue = newGameState
+incVal pitIndex gState n = updateState
  where
-   pitValue = gameState!!pitIndex
-   pitsFalse = init(fst(splitAt(pitIndex + 1) gameState))
-   pitsTrue = snd(splitAt (pitIndex + 1) gameState)
-   newGameState = (pitsFalse ++ (pitValue + incrementValue) : pitsTrue)
+   pitValue = gState!!pitIndex
+   pitsFalse = init(fst(splitAt(pitIndex + 1) gState))
+   pitsTrue = snd(splitAt (pitIndex + 1) gState)
+   updateState = (pitsFalse ++ (pitValue + n) : pitsTrue)
 \end{code}
 
-The help-function `emptyPit`
+The help-function `stealOpposite`
 ----
-If you land in an empty pit on your own banehalvdel,
-then steal from the opposite pit plus one
+In the case where a player drops hes last stone in one of hes own empty pits,
+he will steal all the stones from the opposite pit (from the opponent) plus one
+(that last stone he dropped in hes own pit). All these stones will go into
+the players kalaha.
+
+So based on whether we are player False or True, we invoke function
+`stealFromTrue` or `stealFromFalse.` which invoke the functions `incVal` and
+`pickUpStones` which updates the state of the game with help from:
+
+1. totalStones which adds the opposit pits stones with one (hence stealing the
+stones from the opponent plus our last dropped stone)
+
+2. emptyLast which make sure to empty the pit, where we dropped the last stone.
+
+3. emptyOpposite which empty the opposite pit for stones.
 
 \begin{code}
-emptyPit (Kalaha pitCount stoneCount) player index s
- | player == False = emptyF'
- | player == True = emptyT'
+stealOpposite (Kalaha pitC _) player index gState
+ | player == False = stealFromTrue
+ | player == True = stealFromFalse
  where
-   -- Modsat pit + 1
-   op = (s!!(index+((2*pitCount)-(index*2)))) + 1
-   -- tmmer index for tomt slut pit
-   newState = pickUpStones index s
-   -- tmmer modsat pit
-   newState2 = pickUpStones (index+((2*pitCount)-(index*2))) newState
-   -- false
-   emptyF' = modify pitCount newState2 op
-   -- true
-   emptyT' = modify ((pitCount*2)+1) newState2 op
+   stealFromTrue = incVal pitC emptyOpposite totalStones
+   stealFromFalse = incVal ((pitC*2)+1) emptyOpposite totalStones
+   totalStones = (gState!!(index+((2*pitC)-(index*2)))) + 1
+   emptyLast = pickUpStones index gState
+   emptyOpposite = pickUpStones (index+((2*pitC)-(index*2))) emptyLast
 \end{code}
 
 The help-function `emptySpecificPit`
 ----
-is called by sweapBoard to empty one index at a time, and add
-it to the kalaha.
+This function is called by sweapBoard to empty one index at a time, and add
+it to the right kalaha.
 
 \begin{code}
-emptySpecificPit (Kalaha n m) p o s
- | p == False = allEmptyFalse'
+emptySpecificPit (Kalaha pitC _) player o gState
+ | player == False = allEmptyFalse'
  | otherwise = allEmptyTrue'
  where
-  val = s!!o
-  k = pickUpStones o s
-  allEmptyFalse' = modify n k val
-  allEmptyTrue' = modify (n*2+1) k val
+  val = gState!!o
+  k = pickUpStones o gState
+  allEmptyFalse' = incVal pitC k val
+  allEmptyTrue' = incVal (pitC*2+1) k val
 \end{code}
 
 The help-function `lastMove`
+----
+In this function we check for the other rules:
+
 1. if player false lands in an empty pit
 2. if player true lands in an empty pit
 3. if player false lands in player own kalaha
@@ -244,8 +256,8 @@ lastMove (Kalaha pitC stoneC) p pitIndex gState
  | (p == True) && (pitIndex == pitC*2+1) = lastKT'
  | otherwise = (not p, gState)
   where
-  emptyFalseOpposite = (emptyPit (Kalaha pitC stoneC) False pitIndex gState)
-  emptyTrueOpposite = (emptyPit (Kalaha pitC stoneC) True pitIndex gState)
+  emptyFalseOpposite = (stealOpposite (Kalaha pitC stoneC) False pitIndex gState)
+  emptyTrueOpposite = (stealOpposite (Kalaha pitC stoneC) True pitIndex gState)
   -- last empty pit player false
   lastEF' = (True, emptyFalseOpposite)
   -- last empty pit player true
@@ -256,40 +268,49 @@ lastMove (Kalaha pitC stoneC) p pitIndex gState
   lastKT' = (True, gState)
 \end{code}
 
-The help-function `endCheck`
+The help-function `emptyCheck`
 ----
-In this help-function we check if the pits of a player are empty. In that case
-the oppenent will collect all hes own stones to hes kalaha, and the game will end.
+In this help-function we check if the pits of a player are empty.
+In that case the oppenent will collect all hes own stones to hes kalaha,
+and the game will end.
+
+We do this by looking for the case where we get the value 'Nothing' from
+finding indices greater than zero in both player true and false's pits.
+So if a players pits are empty, we invoke the `sweapBoard` function for the
+opposite player which then collects hes own stones.
 
 \begin{code}
-endCheck (Kalaha pitC stoneC) p pitIndex gameState
- | (findIndex (>0) (fst(splitAt pitC gState)) == Nothing) = (swap, collect)
- | (findIndex (>0) (init(snd(splitAt (pitC+1) gState))) == Nothing) = (swap, collect)
- | otherwise = lastMove (Kalaha pitC stoneC) p pitIndex gameState
+emptyCheck (Kalaha pitC stoneC) p pitIndex gState
+ | (findIndex (>0) (fst(splitAt pitC newState)) == Nothing) = swap'
+ | (findIndex (>0) (init(snd(splitAt (pitC+1) newState))) == Nothing) = swap'
+ | otherwise = lastMove (Kalaha pitC stoneC) p pitIndex gState
   where
     swap = not p
-    -- state for last move
-    gState = snd(lastMove (Kalaha pitC stoneC) p pitIndex gameState)
+    swap' = (swap, collect)
+    newState = snd(lastMove (Kalaha pitC stoneC) p pitIndex gState)
     collect
-     | p == False = sweapBoard (Kalaha pitC stoneC) True gState listOfindexes ((length listOfindexes) -1)
-     | p == True = sweapBoard (Kalaha pitC stoneC) False gState listOfindexes ((length listOfindexes) -1)
+     | p == False = sweapBoard (Kalaha pitC stoneC) True newState indexList l
+     | p == True = sweapBoard (Kalaha pitC stoneC) False newState indexList l
      where
-      listOfindexes = findIndices (>0) gState
+      l = ((length indexList) -1)
+      indexList = findIndices (>0) newState
 \end{code}
 
 The help-function `sweapBoard`
 ----
-Empty all the pits to the correct players kalaha
+So the sweapBoard function is invoked by emptyCheck, and recursively extracts
+the values in the pits into the correct players kalaha, by invoking the
+function emptySpecificPit. Ultimately it will return the final game state.
 
 \begin{code}
-sweapBoard (Kalaha pitC stoneC) p gState listOfindexes pitIndex
+sweapBoard (Kalaha pitC stoneC) p gState indexList pitIndex
  | (pitIndex<0) = gState
- | (extractValue == pitC) = sweapBoard (Kalaha pitC stoneC) p gState listOfindexes (pitIndex-1)
- | (extractValue == pitC*2+1) = sweapBoard (Kalaha pitC stoneC) p gState listOfindexes (pitIndex-1)
- | otherwise = sweapBoard (Kalaha pitC stoneC) p k listOfindexes (pitIndex-1)
+ | (extractVal == pitC) = sweapBoard (Kalaha pitC stoneC) p gState indexList (pitIndex-1)
+ | (extractVal == pitC*2+1) = sweapBoard (Kalaha pitC stoneC) p gState indexList (pitIndex-1)
+ | otherwise = sweapBoard (Kalaha pitC stoneC) p execute indexList (pitIndex-1)
  where
-    extractValue = listOfindexes!!pitIndex
-    k = emptySpecificPit (Kalaha pitC stoneC) p extractValue gState
+    extractVal = indexList!!pitIndex
+    execute = emptySpecificPit (Kalaha pitC stoneC) p extractVal gState
 \end{code}
 
 The function `showGameImpl`
@@ -320,11 +341,15 @@ Trees
 data Tree m v  = Node v [(m,Tree m v)] deriving (Eq, Show)
 \end{code}
 
-Test tree hjelpefunktion
+Test tree
 ----
 \begin{code}
 testTree :: Tree Int Int
-testTree = Node 3 [(0, Node 4[(0, Node 5 []),(1, Node 6 []), (2, Node 7 [])]), (1, Node 9[(0, Node 10[])])]
+testTree = Node 3 [(0, Node 4
+    [(0, Node 5 []),(1, Node 6 []), (2, Node 7 [])])
+    ,(1, Node 9
+      [(0, Node 10[])])
+    ]
 \end{code}
 
 
