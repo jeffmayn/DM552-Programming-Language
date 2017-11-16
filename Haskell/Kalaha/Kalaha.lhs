@@ -122,17 +122,11 @@ The function `letsMove`
 kalaha game, a player, a newGameState, the current index and its value. With guards
 we check for some condition, that will determine the next legal move:
 
-1. If a chosen pit index has value zero, we need to check whether all pits of
-the players are empty.
-
-Before any move is made, we want to be sure that all the pits of both players
-are not empty.
-
-(When we drop the last stone from our hand in an empty pit, we want to check
-if its in our own pit or kalaha, or if its in the opponents pit or kalaha.
+1. if we have zero stones left in the hand, we check for the other rules.
 This is explained in more detailts in the help-function `endCheck`.)
 
-2. To prevent a move to reach past the last index in the list, we jump back at
+2. As long as we have stone in the hand .. and
+To prevent a move to reach past the last index in the list, we jump back at
 the beginning (index zero), and drop a stone.
 
 3. If player false lands in player trues kalaha, we skip it, and land at player
@@ -144,20 +138,20 @@ trues start pit, and drop a stone.
 5. if none of above rules are violated, we move to next pit and drop a stone.
 
 \begin{code}
-letsMove (Kalaha pitC stoneC) p gState pitIndex pitVal
+letsMove (Kalaha pitC stoneC) p gState pitIndex stones
 -- Guard 1:
- | (pitVal == 0) = endCheck (Kalaha pitC stoneC) p (pitIndex-1) gState
+ | (stones == 0) = endCheck (Kalaha pitC stoneC) p (pitIndex-1) gState
 -- Guard 2:
- | (pitVal > 0) && (pitIndex > pitC*2+1) =
-   letsMove (Kalaha pitC stoneC) p beyond 1 (pitVal-1)
+ | (stones > 0) && (pitIndex > pitC*2+1) =
+   letsMove (Kalaha pitC stoneC) p beyond 1 (stones-1)
 -- Guard 3:
  | (p == False) && (pitIndex == 2*pitC+1) =
-   letsMove (Kalaha pitC stoneC) p skipTrue 1 (pitVal-1)
+   letsMove (Kalaha pitC stoneC) p skipTrue 1 (stones-1)
 -- Guard 4:
  | (p == True) && (pitIndex == pitC) =
-   letsMove (Kalaha pitC stoneC) p skipFalse (pitIndex+2) (pitVal-1)
+   letsMove (Kalaha pitC stoneC) p skipFalse (pitIndex+2) (stones-1)
 -- Guard 5:
- | otherwise = letsMove (Kalaha pitC stoneC) p nextMove (pitIndex+1) (pitVal-1)
+ | otherwise = letsMove (Kalaha pitC stoneC) p nextMove (pitIndex+1) (stones-1)
  where
   nextMove = modify pitIndex gState 1
   beyond = modify 0 gState 1
@@ -185,6 +179,8 @@ pickUpStones pitIndex gState = newgState
 
 The help-function `modify`
 ----
+takes the existent value and increment by l (usually one)
+
 
 \begin{code}
 modify pitIndex gameState incrementValue = newGameState
@@ -197,26 +193,31 @@ modify pitIndex gameState incrementValue = newGameState
 
 The help-function `emptyPit`
 ----
+If you land in an empty pit on your own banehalvdel,
+then steal from the opposite pit plus one
 
 \begin{code}
-emptyPit (Kalaha pitCount stoneCount) player q s
+emptyPit (Kalaha pitCount stoneCount) player index s
  | player == False = emptyF'
  | player == True = emptyT'
  where
    -- Modsat pit + 1
-   op = (s!!(q+((2*pitCount)-(q*2)))) + 1
+   op = (s!!(index+((2*pitCount)-(index*2)))) + 1
    -- tmmer index for tomt slut pit
-   k2 = pickUpStones q s
+   newState = pickUpStones index s
    -- tmmer modsat pit
-   k3 = pickUpStones (q+((2*pitCount)-(q*2))) k2
+   newState2 = pickUpStones (index+((2*pitCount)-(index*2))) newState
    -- false
-   emptyF' = modify pitCount k3 op
+   emptyF' = modify pitCount newState2 op
    -- true
-   emptyT' = modify ((pitCount*2)+1) k3 op
+   emptyT' = modify ((pitCount*2)+1) newState2 op
 \end{code}
 
 The help-function `emptySpecificPit`
 ----
+is called by sweapBoard to empty one index at a time, and add
+it to the kalaha.
+
 \begin{code}
 emptySpecificPit (Kalaha n m) p o s
  | p == False = allEmptyFalse'
@@ -231,8 +232,8 @@ emptySpecificPit (Kalaha n m) p o s
 The help-function `lastMove`
 1. if player false lands in an empty pit
 2. if player true lands in an empty pit
-3. if player false lands in player trues kalaha
-4. if player true lands in player falses kalaha
+3. if player false lands in player own kalaha
+4. if player true lands in player own kalaha
 5. nothing happens, and returns state and its next players turn
 ----
 \begin{code}
@@ -243,11 +244,15 @@ lastMove (Kalaha pitC stoneC) p pitIndex gState
  | (p == True) && (pitIndex == pitC*2+1) = lastKT'
  | otherwise = (not p, gState)
   where
-  bo = (emptyPit (Kalaha pitC stoneC) False pitIndex gState)
-  biver = (emptyPit (Kalaha pitC stoneC) True pitIndex gState)
-  lastEF' = (True, bo)
-  lastET' = (False, biver)
+  emptyFalseOpposite = (emptyPit (Kalaha pitC stoneC) False pitIndex gState)
+  emptyTrueOpposite = (emptyPit (Kalaha pitC stoneC) True pitIndex gState)
+  -- last empty pit player false
+  lastEF' = (True, emptyFalseOpposite)
+  -- last empty pit player true
+  lastET' = (False, emptyTrueOpposite)
+  -- last kalaha false
   lastKF' = (False, gState)
+  -- last kalaha true
   lastKT' = (True, gState)
 \end{code}
 
@@ -263,6 +268,7 @@ endCheck (Kalaha pitC stoneC) p pitIndex gameState
  | otherwise = lastMove (Kalaha pitC stoneC) p pitIndex gameState
   where
     swap = not p
+    -- state for last move
     gState = snd(lastMove (Kalaha pitC stoneC) p pitIndex gameState)
     collect
      | p == False = sweapBoard (Kalaha pitC stoneC) True gState listOfindexes ((length listOfindexes) -1)
@@ -271,8 +277,9 @@ endCheck (Kalaha pitC stoneC) p pitIndex gameState
       listOfindexes = findIndices (>0) gState
 \end{code}
 
-The help-function `emptyAll`
+The help-function `sweapBoard`
 ----
+Empty all the pits to the correct players kalaha
 
 \begin{code}
 sweapBoard (Kalaha pitC stoneC) p gState listOfindexes pitIndex
@@ -383,7 +390,7 @@ maxSnd :: (a,Double) -> (a, Double) -> (a, Double)
 maxSnd a@(_,v1) b@(_,v2) | v1 >= v2 = a| otherwise = b
 
 minSnd :: (a, Double) -> (a, Double) -> (a, Double)
-minSnd a@(_,v1) b@(_,v2) | v1 < v2 = a| otherwise = b
+minSnd a@(_,v1) b@(_,v2) | v1 <= v2 = a| otherwise = b
 
 maximumSnd :: [(a, Double)] -> (a, Double)
 maximumSnd [] = error "undefined for empty list"
@@ -397,11 +404,41 @@ minimumSnd (x:xs) = foldl minSnd x xs
 The function `minimaxAlphaBeta`
 ----
 
+The function `minimaxAlphaBeta`
+----
 \begin{code}
 type AlphaBeta = (Double,Double)
 
+maxValue :: (Double,Double) -> (Maybe m, Double) ->  [(m, Tree m (Player, Double))] -> (Maybe m, Double)
+maxValue (a,b) (m0,v0) [] = (m0,v0)
+maxValue (a,b) (m0,v0) ((m1,c) : ch)
+ | (v >= b) = (Just m1, v)
+ | otherwise = maxValue (maxAlpha,b) (m,v) (ch)
+  where
+   v1       = snd $ minimaxAlphaBeta (a,b) c
+   (m,v)    = maxSnd (m0,v0) (Just m1,v1)
+   maxAlpha = (max a v)
+
+
+
+minValue :: (Double,Double) -> (Maybe m, Double) ->  [(m, Tree m (Player, Double))] -> (Maybe m, Double)
+minValue (a,b) (m0,v0) [] = (m0,v0)
+minValue (a,b) (m0,v0) ((m1,c) : ch)
+ | (v <= a) = (Just m1, v)
+ | otherwise = minValue (a,minBeta) (m,v) (ch)
+  where
+   v1      = snd $ minimaxAlphaBeta (a,b) c
+   (m,v)   = minSnd (m0,v0) (Just m1,v1)
+   minBeta = (min b v)
+
+
+
 minimaxAlphaBeta :: AlphaBeta -> Tree m (Player, Double) -> (Maybe m, Double)
-minimaxAlphaBeta = undefined
+minimaxAlphaBeta (a,b) (Node (_,treeValue) []) =  (Nothing, treeValue)
+minimaxAlphaBeta (a,b) (Node (p, v) ch)
+ | p == True       = maxValue (a,b) (Nothing, (-1/0)) (ch)
+ | otherwise       = minValue (a,b) (Nothing, (1/0)) (ch)
+
 \end{code}
 
 Testing and sample executions
