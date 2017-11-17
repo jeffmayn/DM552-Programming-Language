@@ -497,7 +497,7 @@ a given player and kalaha state. We only test for a tree with two pits and two
 stones in each, as shown in picture X, otherwise the output tree would be too
 big.
 
-\includegraphics[width=0.9\textwidth]{testing/all/tree.png}
+\includegraphics[width=0.5\textwidth]{testing/all/tree.png}
 
 In the function \textbf{takeTree} we test with the same tree as in \textbf{treeImpl}
 only now we cut it off in depth two.
