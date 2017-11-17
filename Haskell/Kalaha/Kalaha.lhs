@@ -6,7 +6,7 @@ title: Programming Languages (Project 1)
 author: Jeff Gyldenbrand (jegyl16)
 date: November 17, 2017
 abstract: |
-    The goal of this project is to implement a game of Kalaha, 
+    The goal of this project is ..
 ---
 
 \newpage
