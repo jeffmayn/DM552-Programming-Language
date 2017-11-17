@@ -278,11 +278,10 @@ opposite player which then collects hes own stones.
 
 \begin{code}
 emptyCheck (Kalaha pitCount stoneCount) player pitIndex gameState
- | (findIndex (>0) (fst(splitAt pitCount gState)) == Nothing) = (swap, tCollect)
- | (findIndex (>0) (init(snd(splitAt (pitCount+1) gState))) == Nothing) = (swap, fCollect)
+ | (findIndex (>0) (fst(splitAt pitCount gState)) == Nothing) = (not player, tCollect)
+ | (findIndex (>0) (init(snd(splitAt (pitCount+1) gState))) == Nothing) = (not player, fCollect)
  | otherwise = lastMove (Kalaha pitCount stoneCount) player pitIndex gameState
   where
-   swap = not player
    gState = snd(lastMove (Kalaha pitCount stoneCount) player pitIndex gameState)
    listOfindexes = findIndices (>0) gState
    tCollect = sweapBoard (Kalaha pitCount stoneCount) True gState listOfindexes ((length listOfindexes) -1)
@@ -382,6 +381,16 @@ data Game s m = Game {
     moves         :: Player -> s -> [m],
     value         :: Player -> s -> Double}
 
+
+showTree :: (Show v, Show m) => Tree m v -> [String]
+showTree (Node v []) = [show v]
+showTree (Node v l@(_:xs)) = case xs of
+  [] -> show v : concatMap sT' l
+  _  -> show v : concatMap sT (init l) ++ sT' (last xs)
+  where
+    sT  (m,x) = lines ("+- " ++ show m ++ " -> " ++ drop 3 (unlines $ map ("|  " ++) (showTree x)))
+    sT' (m,x) = lines ("+- " ++ show m ++ " -> " ++ drop 3 (unlines $ map ("   " ++) (showTree x)))
+
 kalahaGame :: Kalaha -> Game KState KPos
 kalahaGame k = Game {
     startState = startStateImpl k,
@@ -396,7 +405,6 @@ startTree g p = tree g (p, startState g)
 \end{code}
 The function `tree`
 ----
-
 
 \begin{code}
 tree :: Game s m -> (Player, s) -> Tree m (Player, Double)
@@ -489,7 +497,7 @@ a given player and kalaha state. We only test for a tree with two pits and two
 stones in each, as shown in picture X, otherwise the output tree would be too
 big.
 
-\includegraphics[width=0.9\textwidth]{testing/tree/treeImpl_False_2_2.png}
+\includegraphics[width=0.9\textwidth]{testing/all/tree.png}
 
 In the function \textbf{takeTree} we test with the same tree as in \textbf{treeImpl}
 only now we cut it off in depth two.
