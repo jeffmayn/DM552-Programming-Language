@@ -6,7 +6,7 @@ title: Programming Languages (Project 1)
 author: Jeff Gyldenbrand (jegyl16)
 date: November 17, 2017
 abstract: |
-    The goal of this project is ... to eat cake
+    The goal of this project is to implement a game of Kalaha, 
 ---
 
 \newpage
@@ -120,8 +120,8 @@ moveImpl (Kalaha pitC stoneC) p gState pitIndex = nextTurn
    updatedState = pickUpStones pitIndex gState
 \end{code}
 
-The function `letsMove`
-----
+\textbf{The main help-function 'letsMove'}
+
 \textbf{letsMove} is where the primary action is happening. As parameters it takes a
 kalaha game, a player, a newGameState, the current index and its value.
 With guards we check for some condition, that will determine the next
@@ -159,8 +159,8 @@ letsMove (Kalaha pitC stoneC) p gState pIndex stones
   skipFalse = incVal (pIndex + 1) gState 1
 \end{code}
 
-The help-function `pickUpStones`
-----
+\textbf{The help-function 'pickUpStones'}
+
 We start a move by picking up all the stones from a chosen pit. We look at the
 current game state and changes the giving index's value to zero.
 
@@ -177,8 +177,8 @@ pickUpStones pitIndex gState = newgState
    newgState = (removeIndexValue ++ 0 : restOfList)
 \end{code}
 
-The help-function `incVal`
-----
+\textbf{The help-function 'incVal'}
+
 This function takes as argument a pit index, game state and a value n.
 When ever this function is invoked, the value at giving index is incremented
 by n, and returns the new game state to the function it is invoked by.
@@ -192,8 +192,8 @@ incVal pitIndex gState n = updateState
    updateState = (pitsFalse ++ (pitValue + n) : pitsTrue)
 \end{code}
 
-The help-function `stealOpposite`
-----
+\textbf{The help-function 'stealOpposite}
+
 In the case where a player drops hes last stone in one of hes own empty pits,
 he will steal all the stones from the opposite pit (from the opponent) plus one
 (that last stone he dropped in hes own pit). All these stones will go into
@@ -223,8 +223,8 @@ stealOpposite (Kalaha pitC stoneC) player index gState
    stealFromFalse = incVal ((pitC*2)+1) emptyOpposite totalStones
 \end{code}
 
-The help-function `emptySpecificPit`
-----
+\textbf{The help-function 'emptySpecificPit'}
+
 This function is called by sweapBoard to empty a players remaining stones
 one pit at a time, and add it to the this players kalaha.
 
@@ -239,8 +239,8 @@ emptySpecificPit (Kalaha pitC stoneC) player index gState
   nextTrue = incVal (pitC*2+1) newState stones
 \end{code}
 
-The help-function `lastMove`
-----
+\textbf{The help-function 'lastMove'}
+
 In this function we check for the other rules:
 
 1. if player False lands in an empty pit
@@ -265,8 +265,8 @@ lastMove (Kalaha pitC stoneC) p pitIndex gState
   case4 = (True, gState)
 \end{code}
 
-The help-function `emptyCheck`
-----
+\textbf{The help-function 'emptyCheck'}
+
 In this function we check if the pits of a player are empty.
 In that case the oppenent will collect all hes own stones to hes kalaha,
 and the game will end.
@@ -288,8 +288,8 @@ emptyCheck (Kalaha pitCount stoneCount) player pitIndex gameState
    fCollect = sweapBoard (Kalaha pitCount stoneCount) False gState listOfindexes ((length listOfindexes) -1)
 \end{code}
 
-The help-function `sweapBoard`
-----
+\textbf{The help-function 'sweapBoard'}
+
 So the sweapBoard function is invoked by emptyCheck, and recursively extracts
 the values in the pits into the correct players kalaha, by invoking the
 function emptySpecificPit. Ultimately it will return the final game state.
@@ -341,8 +341,10 @@ Trees
 data Tree m v  = Node v [(m,Tree m v)] deriving (Eq, Show)
 \end{code}
 
-Test tree
-----
+\textbf{Test tree}
+This is a test tree giving from the assignement. We use this to develop the
+\textbf{takeTree} function
+
 \begin{code}
 testTree :: Tree Int Int
 testTree = Node 3 [(0, Node 4
@@ -351,7 +353,6 @@ testTree = Node 3 [(0, Node 4
       [(0, Node 10[])])
     ]
 \end{code}
-
 
 The function `takeTree`
 ----
