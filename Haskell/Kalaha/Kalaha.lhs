@@ -134,7 +134,7 @@ With guards we check for some condition, that will determine the next
 legal move:
 
 1. if we have zero stones left in the hand, we check for the other rules.
-This is explained in more detailts in the help-function \textbf{endCheck}.
+This is explained in more detailts in the help-function \textbf{otherRules}.
 
 2. As long as we have stones in the hand we move.. and to prevent a move to
 reach past the last index in the list, we jump back at the beginning
