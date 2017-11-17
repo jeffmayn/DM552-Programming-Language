@@ -382,15 +382,6 @@ data Game s m = Game {
     value         :: Player -> s -> Double}
 
 
-showTree :: (Show v, Show m) => Tree m v -> [String]
-showTree (Node v []) = [show v]
-showTree (Node v l@(_:xs)) = case xs of
-  [] -> show v : concatMap sT' l
-  _  -> show v : concatMap sT (init l) ++ sT' (last xs)
-  where
-    sT  (m,x) = lines ("+- " ++ show m ++ " -> " ++ drop 3 (unlines $ map ("|  " ++) (showTree x)))
-    sT' (m,x) = lines ("+- " ++ show m ++ " -> " ++ drop 3 (unlines $ map ("   " ++) (showTree x)))
-
 kalahaGame :: Kalaha -> Game KState KPos
 kalahaGame k = Game {
     startState = startStateImpl k,
@@ -405,6 +396,13 @@ startTree g p = tree g (p, startState g)
 \end{code}
 The function `tree`
 ----
+This function \textbf{tree} outputs the complete game tree from a given
+game, player and game state. The output of the function is in one long line,
+so to make it more read-friendly, the function \textbf{showTree} is implemented.
+
+Function \textbf{showTree} is a modification of the function from
+class exercise: "Induction proofs, functions on trees, and Monoids"
+which we went through on date 11-10, file: solution.lhs
 
 \begin{code}
 tree :: Game s m -> (Player, s) -> Tree m (Player, Double)
@@ -413,6 +411,15 @@ tree game (player, state) = Node (player, treeValue) treeMove
     treeValue = value game player state
     treeMoves = moves game player state
     treeMove = [(m, tree game (move game player state m)) | m <- treeMoves]
+
+showTree :: (Show v, Show m) => Tree m v -> [String]
+showTree (Node v []) = [show v]
+showTree (Node v l@(_:xs)) = case xs of
+  [] -> show v : concatMap sT' l
+  _  -> show v : concatMap sT (init l) ++ sT' (last xs)
+  where
+    sT  (m,x) = lines ("+- " ++ show m ++ " -> " ++ drop 3 (unlines $ map ("|  " ++) (showTree x)))
+    sT' (m,x) = lines ("+- " ++ show m ++ " -> " ++ drop 3 (unlines $ map ("   " ++) (showTree x)))
 \end{code}
 
 The function `minimax`
@@ -456,7 +463,7 @@ We test the function \textbf{startStateImpl} for tree cases: one for a kalaha
 game with six pits and six stones in each, one for six pits and four stones,
 and finally one for four pits and four stones in each. See picture X for result.
 
-\includegraphics[width=0.7\textwidth]{testing/startStateImpl/startStateImpl.png}
+\includegraphics[width=0.4\textwidth]{testing/startStateImpl/startStateImpl.png}
 
 As seen in picture X, we test the function \textbf{valueImpl} with two
 different cases: one for a kalaha game with six pits, and one with only two
