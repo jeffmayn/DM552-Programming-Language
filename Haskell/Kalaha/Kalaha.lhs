@@ -247,7 +247,7 @@ In this function we check for the other rules:
 3. if player False lands in player own kalaha
 4. if player True lands in player own kalaha
 5. nothing happens, and returns state and its next players turn
-----
+
 \begin{code}
 lastMove (Kalaha pitC stoneC) p pitIndex gState
  | (p == False) && (gState!!pitIndex == 1) && (pitIndex < pitC) = case1
@@ -475,3 +475,59 @@ minimaxAlphaBeta (a,b) (Node (p, v) ch)
 
 Testing and sample executions
 ====
+As seen in picture X, we test the function \textbf{valueImpl} with two
+different cases: one for a kalaha game with six pits, and one with only two
+pits. In both cases we see that player True's kalaha is subtracted from player
+False's kalaha, with the output 7.0 and -1.0
+
+\includegraphics[width=0.7\textwidth]{testing/valueImpl/valueImpl.png}
+
+As seen in picture X, we test the function \textbf{movesImpl} with three
+different cases: one for player False, where we return hes pits which has
+positive elements, we test the same case only for player True, and one case where player
+False has zero positive elements, hence returning an empty list.
+
+\includegraphics[width=0.7\textwidth]{testing/movesImpl/movesImpl.png}
+
+For the function \textbf{moveImpl} we look at three cases, one for a regular
+move for player True, as shown in picture X, one for the case where all player
+False's pits become empty, so player True collects the remaining
+stones to hes kalaha, as shown in picture X, and lastly, the case where player
+False lands in one of hes own empty pits, and steals the stones from the
+opposite side, as shown in picture X.
+
+\includegraphics[width=0.7\textwidth]{testing/moveImpl/moveImpl_regular_move.png}
+
+\includegraphics[width=0.7\textwidth]{testing/moveImpl/moveImpl_falses_becomes_empty.png}
+
+\includegraphics[width=0.7\textwidth]{testing/moveImpl/moveImpl_steals_opposite.png}
+
+In the function \textbf{showGameImpl} we test for two cases to make sure the
+output is pretty and aligned, so case one is for a kalaha with six pits, and
+second case for a kalaha with 4 pits. Both cases with number of one and two
+digits.
+
+\includegraphics[width=0.7\textwidth]{testing/showGameImpl/showGameImpl.png}
+
+In the \textbf{treeImpl} we get the complete tree for all possible moves for
+a given player and kalaha state. We only test for a tree with two pits and two
+stones in each, as shown in picture X, otherwise the output tree would be too
+big.
+
+\includegraphics[width=0.9\textwidth]{testing/tree/treeImpl_False_2_2.png}
+
+takeTree of tree false 2 2
+
+\includegraphics[width=0.9\textwidth]{testing/tree/takeTree_of_tree_False_2_2.png}
+
+takeTree
+
+\includegraphics[width=0.4\textwidth]{testing/takeTree/takeTree_testtree.png}
+
+minimax
+
+\includegraphics[width=1.0\textwidth]{testing/minimax/minimax1.png}
+
+alfa beta
+
+\includegraphics[width=0.7\textwidth]{testing/alfa_beta/alfa_beta.png}
