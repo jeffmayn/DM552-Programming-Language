@@ -211,15 +211,16 @@ stones from the opponent plus our last dropped stone)
 3. \textbf{emptyOpposite} which empty the opposite pit for stones.
 
 \begin{code}
-stealOpposite (Kalaha pitC _) player index gState
+stealOpposite (Kalaha pitC stoneC) player index gState
  | player == False = stealFromTrue
  | player == True = stealFromFalse
  where
-   stealFromTrue = incVal pitC emptyOpposite totalStones
-   stealFromFalse = incVal ((pitC*2)+1) emptyOpposite totalStones
    totalStones = (gState!!(index+((2*pitC)-(index*2)))) + 1
    emptyLast = pickUpStones index gState
    emptyOpposite = pickUpStones (index+((2*pitC)-(index*2))) emptyLast
+
+   stealFromTrue = incVal pitC emptyOpposite totalStones
+   stealFromFalse = incVal ((pitC*2)+1) emptyOpposite totalStones
 \end{code}
 
 The help-function `emptySpecificPit`
@@ -228,7 +229,7 @@ This function is called by sweapBoard to empty a players remaining stones
 one pit at a time, and add it to the this players kalaha.
 
 \begin{code}
-emptySpecificPit (Kalaha pitC _) player index gState
+emptySpecificPit (Kalaha pitC stoneC) player index gState
  | player == False = nextFalse
  | otherwise = nextTrue
  where
@@ -276,20 +277,16 @@ So if a players pits are empty, we invoke the `sweapBoard` function for the
 opposite player which then collects hes own stones.
 
 \begin{code}
-emptyCheck (Kalaha pitC stoneC) p pitIndex gState
- | (findIndex (>0) (fst(splitAt pitC newState)) == Nothing) = swap'
- | (findIndex (>0) (init(snd(splitAt (pitC+1) newState))) == Nothing) = swap'
- | otherwise = lastMove (Kalaha pitC stoneC) p pitIndex gState
+emptyCheck (Kalaha pitCount stoneCount) player pitIndex gameState
+ | (findIndex (>0) (fst(splitAt pitCount gState)) == Nothing) = (swap, tCollect)
+ | (findIndex (>0) (init(snd(splitAt (pitCount+1) gState))) == Nothing) = (swap, fCollect)
+ | otherwise = lastMove (Kalaha pitCount stoneCount) player pitIndex gameState
   where
-    swap = not p
-    swap' = (swap, collect)
-    newState = snd(lastMove (Kalaha pitC stoneC) p pitIndex gState)
-    collect
-     | p == False = sweapBoard (Kalaha pitC stoneC) True newState indexList l
-     | p == True = sweapBoard (Kalaha pitC stoneC) False newState indexList l
-     where
-      l = ((length indexList) -1)
-      indexList = findIndices (>0) newState
+   swap = not player
+   gState = snd(lastMove (Kalaha pitCount stoneCount) player pitIndex gameState)
+   listOfindexes = findIndices (>0) gState
+   tCollect = sweapBoard (Kalaha pitCount stoneCount) True gState listOfindexes ((length listOfindexes) -1)
+   fCollect = sweapBoard (Kalaha pitCount stoneCount) False gState listOfindexes ((length listOfindexes) -1)
 \end{code}
 
 The help-function `sweapBoard`
@@ -441,40 +438,18 @@ The function `minimaxAlphaBeta`
 \begin{code}
 type AlphaBeta = (Double,Double)
 
-maxValue :: (Double,Double) -> (Maybe m, Double) ->  [(m, Tree m (Player, Double))] -> (Maybe m, Double)
-maxValue (a,b) (m0,v0) [] = (m0,v0)
-maxValue (a,b) (m0,v0) ((m1,c) : ch)
- | (v >= b) = (Just m1, v)
- | otherwise = maxValue (maxAlpha,b) (m,v) (ch)
-  where
-   v1       = snd $ minimaxAlphaBeta (a,b) c
-   (m,v)    = maxSnd (m0,v0) (Just m1,v1)
-   maxAlpha = (max a v)
-
-
-
-minValue :: (Double,Double) -> (Maybe m, Double) ->  [(m, Tree m (Player, Double))] -> (Maybe m, Double)
-minValue (a,b) (m0,v0) [] = (m0,v0)
-minValue (a,b) (m0,v0) ((m1,c) : ch)
- | (v <= a) = (Just m1, v)
- | otherwise = minValue (a,minBeta) (m,v) (ch)
-  where
-   v1      = snd $ minimaxAlphaBeta (a,b) c
-   (m,v)   = minSnd (m0,v0) (Just m1,v1)
-   minBeta = (min b v)
-
-
-
 minimaxAlphaBeta :: AlphaBeta -> Tree m (Player, Double) -> (Maybe m, Double)
-minimaxAlphaBeta (a,b) (Node (_,treeValue) []) =  (Nothing, treeValue)
-minimaxAlphaBeta (a,b) (Node (p, v) ch)
- | p == True       = maxValue (a,b) (Nothing, (-1/0)) (ch)
- | otherwise       = minValue (a,b) (Nothing, (1/0)) (ch)
-
+minimaxAlphaBeta = undefined
 \end{code}
 
 Testing and sample executions
 ====
+We test the function \textbf{startStateImpl} for tree cases: one for a kalaha
+game with six pits and six stones in each, one for six pits and four stones,
+and finally one for four pits and four stones in each. See picture X for result.
+
+\includegraphics[width=0.7\textwidth]{testing/startStateImpl/startStateImpl.png}
+
 As seen in picture X, we test the function \textbf{valueImpl} with two
 different cases: one for a kalaha game with six pits, and one with only two
 pits. In both cases we see that player True's kalaha is subtracted from player
@@ -516,11 +491,13 @@ big.
 
 \includegraphics[width=0.9\textwidth]{testing/tree/treeImpl_False_2_2.png}
 
-takeTree of tree false 2 2
+In the function \textbf{takeTree} we test with the same tree as in \textbf{treeImpl}
+only now we cut it off in depth two.
 
 \includegraphics[width=0.9\textwidth]{testing/tree/takeTree_of_tree_False_2_2.png}
 
-takeTree
+Just so see the output of depth zero and one, we cut the hard-coded test tree
+at zero with the result of an empty tree, and one, as shown in picture X.
 
 \includegraphics[width=0.4\textwidth]{testing/takeTree/takeTree_testtree.png}
 
@@ -528,6 +505,10 @@ minimax
 
 \includegraphics[width=1.0\textwidth]{testing/minimax/minimax1.png}
 
-alfa beta
+All test
 
-\includegraphics[width=0.7\textwidth]{testing/alfa_beta/alfa_beta.png}
+\includegraphics[width=0.7\textwidth]{testing/all/all.png}
+
+minimax test
+
+\includegraphics[width=0.7\textwidth]{testing/all/minimax_all.png}
