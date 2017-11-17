@@ -6,7 +6,13 @@ title: Programming Languages (Project 1)
 author: Jeff Gyldenbrand (jegyl16)
 date: November 17, 2017
 abstract: |
-    The goal of this project is ..
+    The goal of this project is to implement an array of unique complementary
+    functions. When these functions are assembled in a correct order they
+    allow the programmer to construct a program, which posseses the capability,
+    to brute force a victory in Kalaha. This array of functions, as perscribed
+    by they assignment, are to be implemented in the programming language called
+    haskell.
+
 ---
 
 \newpage
@@ -102,8 +108,8 @@ want to return the the logic of a move, meaning the next player and the new
 state, in a tuble.
 
 To accomplish this, several help functions is developed: \textbf{letsMove},
-\textbf{pickUpStones}, \textbf{incVal}, \textbf{emptyPit}, \textbf{emptySpecificPit}, \textbf{lastMove},
-\textbf{endCheck}, and \textbf{sweapBoard}.
+\textbf{pickUpStones}, \textbf{incVal}, \textbf{stealOpposite}, \textbf{collector}, \textbf{otherRules},
+\textbf{outOfStones}, and \textbf{sweapBoard}.
 
 All these help functions are needed in order to define a ruleset of the move,
 and will be explained in more details in the beginning of each. As for the main
@@ -144,7 +150,7 @@ trues start pit, and drop a stone.
 
 \begin{code}
 letsMove (Kalaha pitC stoneC) p gState pIndex stones
- | (stones == 0) = emptyCheck (Kalaha pitC stoneC) p (pIndex-1) gState     -- 1
+ | (stones == 0) = outOfStones (Kalaha pitC stoneC) p (pIndex-1) gState     -- 1
  | (stones > 0) && (pIndex > pitC*2+1) =                                   -- 2
    letsMove (Kalaha pitC stoneC) p beyond 1 (stones-1)
  | (p == False) && (pIndex == 2*pitC+1) =                                  -- 3
@@ -223,13 +229,13 @@ stealOpposite (Kalaha pitC stoneC) player index gState
    stealFromFalse = incVal ((pitC*2)+1) emptyOpposite totalStones
 \end{code}
 
-\textbf{The help-function 'emptySpecificPit'}
+\textbf{The help-function 'collector'}
 
 This function is called by sweapBoard to empty a players remaining stones
 one pit at a time, and add it to the this players kalaha.
 
 \begin{code}
-emptySpecificPit (Kalaha pitC stoneC) player index gState
+collector (Kalaha pitC stoneC) player index gState
  | player == False = nextFalse
  | otherwise = nextTrue
  where
@@ -239,7 +245,7 @@ emptySpecificPit (Kalaha pitC stoneC) player index gState
   nextTrue = incVal (pitC*2+1) newState stones
 \end{code}
 
-\textbf{The help-function 'lastMove'}
+\textbf{The help-function 'otherRules'}
 
 In this function we check for the other rules:
 
@@ -250,7 +256,7 @@ In this function we check for the other rules:
 5. nothing happens, and returns state and its next players turn
 
 \begin{code}
-lastMove (Kalaha pitC stoneC) p pitIndex gState
+otherRules (Kalaha pitC stoneC) p pitIndex gState
  | (p == False) && (gState!!pitIndex == 1) && (pitIndex < pitC) = case1
  | (p == True) && (gState!!pitIndex == 1) && (pitIndex > pitC) && (pitIndex < ((pitC*2)+1)) = case2
  | (p == False) && (pitIndex == pitC) = case3
@@ -265,7 +271,7 @@ lastMove (Kalaha pitC stoneC) p pitIndex gState
   case4 = (True, gState)
 \end{code}
 
-\textbf{The help-function 'emptyCheck'}
+\textbf{The help-function 'outOfStones'}
 
 In this function we check if the pits of a player are empty.
 In that case the oppenent will collect all hes own stones to hes kalaha,
@@ -277,12 +283,12 @@ So if a players pits are empty, we invoke the `sweapBoard` function for the
 opposite player which then collects hes own stones.
 
 \begin{code}
-emptyCheck (Kalaha pitCount stoneCount) player pitIndex gameState
+outOfStones (Kalaha pitCount stoneCount) player pitIndex gameState
  | (findIndex (>0) (fst(splitAt pitCount gState)) == Nothing) = (not player, tCollect)
  | (findIndex (>0) (init(snd(splitAt (pitCount+1) gState))) == Nothing) = (not player, fCollect)
- | otherwise = lastMove (Kalaha pitCount stoneCount) player pitIndex gameState
+ | otherwise = otherRules (Kalaha pitCount stoneCount) player pitIndex gameState
   where
-   gState = snd(lastMove (Kalaha pitCount stoneCount) player pitIndex gameState)
+   gState = snd(otherRules (Kalaha pitCount stoneCount) player pitIndex gameState)
    listOfindexes = findIndices (>0) gState
    tCollect = sweapBoard (Kalaha pitCount stoneCount) True gState listOfindexes ((length listOfindexes) -1)
    fCollect = sweapBoard (Kalaha pitCount stoneCount) False gState listOfindexes ((length listOfindexes) -1)
@@ -290,9 +296,9 @@ emptyCheck (Kalaha pitCount stoneCount) player pitIndex gameState
 
 \textbf{The help-function 'sweapBoard'}
 
-So the sweapBoard function is invoked by emptyCheck, and recursively extracts
+So the sweapBoard function is invoked by outOfStones, and recursively extracts
 the values in the pits into the correct players kalaha, by invoking the
-function emptySpecificPit. Ultimately it will return the final game state.
+function collector. Ultimately it will return the final game state.
 
 \begin{code}
 sweapBoard (Kalaha pitC stoneC) p gState indexList pitIndex
@@ -302,7 +308,7 @@ sweapBoard (Kalaha pitC stoneC) p gState indexList pitIndex
  | otherwise = sweapBoard (Kalaha pitC stoneC) p execute indexList (pitIndex-1)
  where
     extractVal = indexList!!pitIndex
-    execute = emptySpecificPit (Kalaha pitC stoneC) p extractVal gState
+    execute = collector (Kalaha pitC stoneC) p extractVal gState
 \end{code}
 
 The function `showGameImpl`
@@ -356,11 +362,13 @@ testTree = Node 3 [(0, Node 4
 
 The function `takeTree`
 ----
-This function takes as parameters a depth, where we want to cut the children of
-the tree, a kalaha-game (number of pits and stones), a player and a game state.
-
-Base case zero is the empty list, otherwise we recursively map the tree to the
-list.
+As a lazy evaluated game tree is to be constructed later in the assignment,
+a function which allows to block off any children at a specified depth.
+As such a function, which takes an interger and list as parameters,
+implemented. This implementation, will recusivly run thorugh the tree,
+creating a copy of said tree. This recursion, will for each stack element,
+decrement the allowed depth. When a given stack recieves depth count being zero,
+it will not create any further stacks, hence the $n==0$ check.
 
 \begin{code}
 takeTree :: Int -> Tree m v -> Tree m v
@@ -369,6 +377,7 @@ takeTree n (Node v list)
  | otherwise = (Node v (map tree' list))
   where
    tree' (m,t) = (m, takeTree (n-1) t)
+
 \end{code}
 
 
@@ -397,13 +406,14 @@ startTree g p = tree g (p, startState g)
 \end{code}
 The function `tree`
 ----
-This function \textbf{tree} outputs the complete game tree from a given
+This function, \textbf{tree}, outputs the complete game tree for a given
 game, player and game state. The output of the function is in one long line,
-so to make it more read-friendly, the function \textbf{showTree} is implemented.
+as to make it more readable, the function \textbf{showTree} is implemented.
 
 Function \textbf{showTree} is a modification of the function from
-class exercise: "Induction proofs, functions on trees, and Monoids"
-which we went through on date 11-10, file: solution.lhs
+class exercise giving by the teachers assisten: Henrik (henpe15):
+"Induction proofs, functions on trees, and Monoids"
+http://imada.sdu.dk/~henpe15/dm552-17/haskell/ex/w6_1.lhs
 
 \begin{code}
 tree :: Game s m -> (Player, s) -> Tree m (Player, Double)
@@ -425,14 +435,41 @@ showTree (Node v l@(_:xs)) = case xs of
 
 The function `minimax`
 ----
+The function \textbf{minimax}, is a bruteforce algorithm designed to predict
+the outcome of the game. It does so by walking through the tree generate by the
+\textbf{tree} function. When the tree is given, the player is checked, as the
+player defines the applicabel rule on the given nodes children. These rules are
+can be deduced due to the nature of how the tree evaluates the best score.
 
+The score on every node, is defined by the \textbf{valueImpl} function, which
+subtracts the score of player \textbf{false} from player \textbf{true} as shown
+below:
+\begin{equation}
+ score = v_{true} - v_{false}
+\end{equation}
+
+Due to the natue of this mathematical function, it is impled that, the score is
+going to be positiv when player true has be the biggest score. If player false
+were to obtian the biggest kalaha, the score would become negativ.
+
+As such, when the given player is player \textbf{true}, the biggest score is to
+be searched for as to maximise the cahnce if winnig. Otherwise, when it is
+player false, the smallest score is to be searched for.
+
+This can be seen on minimax as pattern maching, when the player is player true,
+alle the children of the given node are canned for the biggest score. When the
+player is player false, the can searches for the smallest score.
+
+Function \textbf{minimax} is a modification of the function from
+class exercise giving by the teachers assisten: Henrik (henpe15):
+"Primary topic: Minimax (+AlphaBeta), tree algorithms" from URL:
+http://imada.sdu.dk/~henpe15/dm552-17/haskell/ex/w7_1.pdf
 
 \begin{code}
 minimax   :: Tree m (Player, Double) -> (Maybe m, Double)
 minimax (Node (_,treeValue) []) =  (Nothing, treeValue)
-minimax (Node (p, v) ch)
-  | p == True = maximumSnd [ (Just path, snd $ minimax subtree) | (path, subtree) <- ch]
-  | otherwise = minimumSnd [ (Just path, snd $ minimax subtree) | (path, subtree) <- ch]
+minimax (Node (True, v) ch) = maximumSnd [ (Just path, snd $ minimax subtree) | (path, subtree) <- ch]
+minimax (Node (False, v) ch) = minimumSnd [ (Just path, snd $ minimax subtree) | (path, subtree) <- ch]
 
 maxSnd :: (a,Double) -> (a, Double) -> (a, Double)
 maxSnd a@(_,v1) b@(_,v2) | v1 >= v2 = a| otherwise = b
@@ -462,18 +499,19 @@ Testing and sample executions
 ====
 We test the function \textbf{startStateImpl} for tree cases: one for a kalaha
 game with six pits and six stones in each, one for six pits and four stones,
-and finally one for four pits and four stones in each. See picture X for result.
+and finally one for four pits and four stones in each. See picture below
+for result.
 
 \includegraphics[width=0.4\textwidth]{testing/startStateImpl/startStateImpl.png}
 
-As seen in picture X, we test the function \textbf{valueImpl} with two
+As seen in the picture below, we test the function \textbf{valueImpl} with two
 different cases: one for a kalaha game with six pits, and one with only two
 pits. In both cases we see that player True's kalaha is subtracted from player
 False's kalaha, with the output 7.0 and -1.0
 
 \includegraphics[width=0.7\textwidth]{testing/valueImpl/valueImpl.png}
 
-As seen in picture X, we test the function \textbf{movesImpl} with three
+As seen in the picture below, we test the function \textbf{movesImpl} with three
 different cases: one for player False, where we return hes pits which has
 positive elements, we test the same case only for player True, and one case where player
 False has zero positive elements, hence returning an empty list.
@@ -481,11 +519,11 @@ False has zero positive elements, hence returning an empty list.
 \includegraphics[width=0.7\textwidth]{testing/movesImpl/movesImpl.png}
 
 For the function \textbf{moveImpl} we look at three cases, one for a regular
-move for player True, as shown in picture X, one for the case where all player
-False's pits become empty, so player True collects the remaining
-stones to hes kalaha, as shown in picture X, and lastly, the case where player
+move for player True, as shown in the picture below, one for the case where all
+player False's pits become empty, so player True collects the remaining
+stones to hes kalaha, as shown in the picture, and lastly, the case where player
 False lands in one of hes own empty pits, and steals the stones from the
-opposite side, as shown in picture X.
+opposite side, as shown in picture last picture.
 
 \includegraphics[width=0.7\textwidth]{testing/moveImpl/moveImpl_regular_move.png}
 
@@ -502,8 +540,8 @@ digits.
 
 In the \textbf{treeImpl} we get the complete tree for all possible moves for
 a given player and kalaha state. We only test for a tree with two pits and two
-stones in each, as shown in picture X, otherwise the output tree would be too
-big.
+stones in each, as shown in the picture below, otherwise the output tree would
+be too big.
 
 \includegraphics[width=0.5\textwidth]{testing/tree/treeImpl_False_2_2.png}
 
@@ -523,14 +561,18 @@ at zero with the result of an empty tree, and one, as shown in picture X.
 
 \includegraphics[width=0.4\textwidth]{testing/takeTree/takeTree_testtree.png}
 
-minimax
+In the picture below we see the output of the minimax algorithm off a
+giving kalaha game, player and game state.
 
 \includegraphics[width=1.0\textwidth]{testing/minimax/minimax1.png}
 
-All test
+In the picture below we run the KalahaTest.lhs to confirm that everything
+is correct.
 
 \includegraphics[width=0.7\textwidth]{testing/all/all.png}
 
-minimax test
+For the final test, we run the GameStrategiesTest.hs to confirm that our
+minimax algorithm is correct. As shown the alfa beta test fails giving that
+the algorithm never got implemented.
 
 \includegraphics[width=0.7\textwidth]{testing/all/minimax_all.png}
