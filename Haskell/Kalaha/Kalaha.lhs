@@ -543,7 +543,7 @@ a given player and kalaha state. We only test for a tree with two pits and two
 stones in each, as shown in the picture below, otherwise the output tree would
 be too big.
 
-\includegraphics[width=0.5\textwidth]{testing/tree/treeImpl_False_2_2.png}
+\includegraphics[width=1.0\textwidth]{testing/tree/treeImpl_False_2_2.png}
 
 The function \textbf{showTree} gives us a more read-friendly view of the same
 tree, by invoking the function with putStrLn $ unlines $ showTree on our
@@ -575,4 +575,4 @@ For the final test, we run the GameStrategiesTest.hs to confirm that our
 minimax algorithm is correct. As shown the alfa beta test fails giving that
 the algorithm never got implemented.
 
-\includegraphics[width=0.7\textwidth]{testing/all/minimax_all.png}
+\includegraphics[width=0.8\textwidth]{testing/all/minimax_all.png}
